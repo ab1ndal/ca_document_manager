@@ -16,11 +16,38 @@ CLIENT_ID = os.getenv("APS_CLIENT_ID")
 CLIENT_SECRET = os.getenv("APS_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("APS_REDIRECT_URI", "http://127.0.0.1:9000/callback")
 PROJECT_ID = os.getenv("ACC_PROJECT_ID")  # e.g. b473ef72-b524-429c-bb7e-a657af7433ea
+TOKEN_FILE = os.getenv("APS_TOKEN_FILE", "aps_token.json")
 
 
 # ---------------------------
 # Local server to capture callback
 # ---------------------------
+
+def load_tokens():
+    try:
+        with open(TOKEN_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return None
+
+def save_tokens(tokens):
+    with open(TOKEN_FILE, "w") as f:
+        json.dump(tokens, f)
+
+def refresh_tokens(refresh_token):
+    url = "https://developer.api.autodesk.com/authentication/v2/token"
+    data = {
+        "grant_type": "refresh_token",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "refresh_token": refresh_token
+    }
+    r = requests.post(url, data=data)
+    if r.status_code != 200:
+        print("[!] Refresh failed:", r.text)
+        return None
+    return r.json()
+
 class OAuthHandler(BaseHTTPRequestHandler):
     code = None
 
@@ -66,9 +93,10 @@ def get_tokens(code: str):
 # ---------------------------
 # RFI API calls
 # ---------------------------
-def get_rfi_user_me(token):
+def get_rfi_user_me(token, project_id):
     """Check if the current user is recognized in the RFIs system"""
-    url = "https://developer.api.autodesk.com/acc/v1/rfis/v1/users/me"
+    print("Auth token:", token)
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/users/me"
     headers = {"Authorization": f"Bearer {token}"}
     r = requests.get(url, headers=headers)
     print("\n[RFI User Me] raw response:", r.status_code)
@@ -80,18 +108,14 @@ def get_rfi_user_me(token):
 
 def search_rfis(token, project_id, limit=5):
     """Search RFIs via POST"""
-    url = "https://developer.api.autodesk.com/acc/v1/rfis/v2/rfis:search"
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/search:rfis"
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
     body = {
-        "filter": {
-            "projectId": project_id
-        },
-        "page": {
-            "limit": limit
-        }
+        "limit": limit,
+        "offset": 0,
     }
     r = requests.post(url, headers=headers, json=body)
     print("\n[Search RFIs] raw response:", r.status_code)
@@ -100,6 +124,203 @@ def search_rfis(token, project_id, limit=5):
         print("\nParsed JSON:")
         print(json.dumps(r.json(), indent=2))
 
+def get_rfi_by_id(token, project_id, rfi_id):
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/rfis/{rfi_id}"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    r = requests.get(url, headers=headers)
+    print("Status:", r.status_code)
+    if not r.status_code == 200:
+        print(r.text[:200])
+        return
+    else:
+        print("\nParsed JSON:")
+        print(json.dumps(r.json(), indent=2))
+        return r.json()
+
+def find_rfi_by_custom_identifier(token, project_id, identifier):
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/search:rfis"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "search": identifier,
+        "limit": 50
+    }
+
+    r = requests.post(url, headers=headers, json=body)
+    print("Status:", r.status_code)
+    if not r.status_code == 200:
+        print(r.text[:200])
+        return
+    if r.status_code == 200:
+        print("\nParsed JSON:")
+        print(json.dumps(r.json(), indent=2))
+    return r.json()
+
+def get_rfis_with_attachments(project_id, token, limit=100):
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/search:rfis"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
+    }
+
+    offset = 0
+    collected = []
+
+    while True:
+        payload = {
+            "limit": limit,
+            "offset": offset,
+            "fields": [
+                "id",
+                "customIdentifier",
+                "title",
+                "attachmentsCount"
+            ]
+        }
+
+        resp = requests.post(url, json=payload, headers=headers)
+        if resp.status_code != 200:
+            print(resp.text)
+            break
+
+        data = resp.json()
+        results = data.get("results", [])
+
+        # Filter only RFIs with attachmentsCount > 0
+        for r in results:
+            if r.get("attachmentsCount", 0) > 0:
+                collected.append({
+                    "id": r["id"],
+                    "number": r.get("customIdentifier"),
+                    "title": r.get("title"),
+                    "attachmentsCount": r.get("attachmentsCount"),
+                })
+
+        # Pagination
+        pag = data.get("pagination", {})
+        total = pag.get("totalResults", 0)
+        offset += limit
+
+        if offset >= total:
+            break
+
+    return collected
+
+def get_rfi_attachments(token, project_id, rfi_id):
+    """
+    Returns list of attachments (files and document references) for a given RFI.
+    """
+
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/rfis/{rfi_id}/attachments"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        print("Error fetching attachments:", r.text)
+        return []
+
+    data = r.json()
+    print("Getting RFIs was a success")
+    print(data)
+    return data.get("results", [])
+
+def download_from_storage_urn(token, storage_urn, display_name, local_path):
+    """
+    Generates a signed S3 download URL and downloads the file.
+    """
+
+    prefix = "urn:adsk.objects:os.object:"
+    if not storage_urn.startswith(prefix):
+        print("Invalid storage URN:", storage_urn)
+        return False
+
+    # Extract bucket and object id
+    clean = storage_urn[len(prefix):]        # wip.dm.prod/xxxxxx.pdf
+    bucket, object_id = clean.split("/", 1)  # bucket = wip.dm.prod, object_id = xxx.pdf
+
+    # Step 1: Request signed S3 download link
+    signed_url_endpoint = f"https://developer.api.autodesk.com/oss/v2/buckets/{bucket}/objects/{object_id}/signeds3download"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    r = requests.get(signed_url_endpoint, headers=headers)
+    if r.status_code != 200:
+        print("Failed to get signed URL:", r.text)
+        return False
+
+    signed_data = r.json()
+    signed_url = signed_data.get("url")
+
+    if not signed_url:
+        print("No signed URL found in response")
+        return False
+
+    # Step 2: Now download using the signed URL (no auth required)
+    r = requests.get(signed_url, stream=True)
+    if r.status_code != 200:
+        print("Download failed:", r.text)
+        return False
+
+    with open(local_path, "wb") as f:
+        for chunk in r.iter_content(8192):
+            if chunk:
+                f.write(chunk)
+
+    print(f"Saved: {local_path}")
+    return True
+
+
+def download_file(url, local_path):
+    print("Downloading file")
+    r = requests.get(url, stream=True)
+    if r.status_code != 200:
+        print("Download failed:", r.status_code)
+        return False
+
+    with open(local_path, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            if chunk:
+                f.write(chunk)
+    print("Downloaded file")
+    return True
+
+def download_rfi_attachments(token, project_id, rfi_json, base_folder="downloads"):
+    """
+    For a given RFI JSON block, download all attachments into a local folder.
+    """
+
+    rfi_id = rfi_json["id"]
+    rfi_number = rfi_json.get("customIdentifier", rfi_id)
+
+    # Create folder for this RFI
+    rfi_folder = os.path.join(base_folder, rfi_number)
+    os.makedirs(rfi_folder, exist_ok=True)
+
+    attachments = get_rfi_attachments(token, project_id, rfi_id)
+
+    if not attachments:
+        print(f"No attachments found for RFI {rfi_number}")
+        return
+
+    print("Found attachments")
+    print(attachments)
+    for att in attachments:
+        display_name = att.get("displayName", att.get("fileName"))
+        storage_urn = att.get("storageUrn")
+        if not storage_urn:
+            print(f"Skipping {display_name}: no storage URN")
+            continue
+
+        local_path = os.path.join(rfi_folder, display_name)
+        success = download_from_storage_urn(token, storage_urn, display_name, local_path)
+
+        if success:
+            print(f"Saved: {local_path}")
+        else:
+            print(f"Failed: {display_name}")
 
 # ---------------------------
 # Main flow
@@ -122,30 +343,72 @@ def main():
     }
     url = auth_url + "?" + urlencode(params)
 
-    server = start_server()
-    print("Opening browser for login...")
-    webbrowser.open(url)
+    # ---------------------------------------
+    # 1. Try loading existing refresh token
+    # ---------------------------------------
+    stored = load_tokens()
 
-    for _ in range(60):
-        if OAuthHandler.code:
-            break
-        time.sleep(1)
-    server.shutdown()
+    if stored and "refresh_token" in stored:
+        print("Using stored refresh token...")
+        new_tokens = refresh_tokens(stored["refresh_token"])
+        if new_tokens:
+            print("Token refreshed successfully.")
+            save_tokens(new_tokens)
+            access_token = new_tokens["access_token"]
+        else:
+            print("Stored refresh token invalid. Running full OAuth login.")
+            stored = None
 
-    if not OAuthHandler.code:
-        print("No auth code received")
-        return
+    # ---------------------------------------
+    # 2. Run full OAuth login if needed
+    # ---------------------------------------
+    if not stored:
+        server = start_server()
+        print("Opening browser for login...")
+        webbrowser.open(url)
 
-    tokens = get_tokens(OAuthHandler.code)
-    access_token = tokens["access_token"]
-    print("\nGot access token.")
+        for _ in range(60):
+            if OAuthHandler.code:
+                break
+            time.sleep(1)
+        server.shutdown()
+
+        if not OAuthHandler.code:
+            print("No auth code received")
+            return
+
+        tokens = get_tokens(OAuthHandler.code)
+        save_tokens(tokens)
+        access_token = tokens["access_token"]
+        print("\nGot access token.")
 
     # Step 1: Check if user is recognized in RFIs API
-    get_rfi_user_me(access_token)
+    #get_rfi_user_me(access_token, PROJECT_ID)
 
     # Step 2: Try searching RFIs in the project
-    print(f"\nUsing project ID: {PROJECT_ID}")
-    search_rfis(access_token, PROJECT_ID)
+    #print(f"\nUsing project ID: {PROJECT_ID}")
+    #search_rfis(access_token, PROJECT_ID)
+
+    # Step 3: Try getting a specific RFI
+    #rfi_id = "9aa5b442-f532-4e1c-98c1-34b4c83ef246"
+    #get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
+
+    # Step 4: Try finding an RFI by custom identifier
+    #identifier = "00127"
+    #find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+
+    # Step 5: Try getting RFIs with attachments
+    #rfis = get_rfis_with_attachments(PROJECT_ID, access_token)
+    #print("\nRFIs with attachments:")
+    #for rfi in rfis:
+    #    print(f"- {rfi['number']} | {rfi['title']} | {rfi['id']} (attachments: {rfi['attachmentsCount']})")
+
+    # Step 6: Try downloading attachments for a specific RFI
+    identifier = "00127"
+    result = find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+    if result and result.get("results"):
+        rfi_json = result["results"][0]
+        download_rfi_attachments(access_token, PROJECT_ID, rfi_json)
 
 
 if __name__ == "__main__":
