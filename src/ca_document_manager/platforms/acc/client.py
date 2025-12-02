@@ -36,7 +36,10 @@ class Client:
         "Make a GET request to the given path"
         url = self._url(path)
         headers = self.headers
-        r = requests.get(url, headers=headers, params=params)
+        if params:
+            r = requests.get(url, headers=headers, params=params)
+        else:
+            r = requests.get(url, headers=headers)
 
         if r.status_code != 200:
             logger.error(f"GET failed with status code {r.status_code}")
@@ -56,3 +59,21 @@ class Client:
             raise Exception(f"POST failed with status code {r.status_code}")
         
         return r.json()
+
+    def search_rfis(self, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        url_path = f"construction/rfis/v3/projects/{self.project_id}/search:rfis"
+        try:
+            response = self.post(path=url_path, body=body)
+        except Exception as e:
+            logger.error(f"[Client] Search RFIs failed with error: {e}")
+            raise
+        return response
+
+    def get_user_id(self) -> Optional[str]:
+        path = f"construction/rfis/v3/projects/{self.project_id}/users/me"
+        try:
+            response = self.get(path=path)
+        except Exception as e:
+            logger.error(f"[Client] Get user ID failed with error: {e}")
+            raise
+        return response["user"]["id"]

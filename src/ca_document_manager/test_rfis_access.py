@@ -383,7 +383,7 @@ def main():
         print("\nGot access token.")
 
     # Step 1: Check if user is recognized in RFIs API
-    #get_rfi_user_me(access_token, PROJECT_ID)
+    get_rfi_user_me(access_token, PROJECT_ID)
 
     # Step 2: Try searching RFIs in the project
     #print(f"\nUsing project ID: {PROJECT_ID}")
@@ -404,11 +404,11 @@ def main():
     #    print(f"- {rfi['number']} | {rfi['title']} | {rfi['id']} (attachments: {rfi['attachmentsCount']})")
 
     # Step 6: Try downloading attachments for a specific RFI
-    identifier = "00127"
-    result = find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
-    if result and result.get("results"):
-        rfi_json = result["results"][0]
-        download_rfi_attachments(access_token, PROJECT_ID, rfi_json)
+    #identifier = "00127"
+    #result = find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+    #if result and result.get("results"):
+    #    rfi_json = result["results"][0]
+    #    download_rfi_attachments(access_token, PROJECT_ID, rfi_json)
 
 
 if __name__ == "__main__":
