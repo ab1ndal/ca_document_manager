@@ -394,8 +394,8 @@ def main():
     #get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
 
     # Step 4: Try finding an RFI by custom identifier
-    #identifier = "00127"
-    #find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+    identifier = "00127"
+    find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
 
     # Step 5: Try getting RFIs with attachments
     #rfis = get_rfis_with_attachments(PROJECT_ID, access_token)
