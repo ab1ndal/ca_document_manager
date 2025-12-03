@@ -8,7 +8,7 @@ import threading
 import time
 import webbrowser
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlencode
+from urllib.parse import urlparse, parse_qs, urlencode
 import requests
 
 logger = logging.getLogger(__name__)
@@ -85,13 +85,14 @@ class Client:
             "client_secret": self.client_secret,
             "refresh_token": stored["refresh_token"]
         }
-        new_tokens = requests.post(url, body=body)
+        new_tokens = requests.post(url, data=body)
+        new_tokens.raise_for_status()
         if new_tokens.status_code != 200:
             print("Refresh failed:", new_tokens.text)
             return False
         if new_tokens:
-            self._save_tokens(new_tokens)
-            self.access_token = new_tokens["access_token"]
+            self._save_tokens(new_tokens.json())
+            self.access_token = new_tokens.json()["access_token"]
             return True
         return False
 
@@ -136,6 +137,8 @@ class Client:
             tokens = self._get_tokens(OAuthHandler.code)
             self._save_tokens(tokens)
             self.access_token = tokens["access_token"]
+
+        return self.access_token
 
     @property
     def headers(self) -> Dict[str, str]:
