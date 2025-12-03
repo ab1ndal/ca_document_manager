@@ -16,6 +16,24 @@ logger = logging.getLogger(__name__)
 from dotenv import load_dotenv
 load_dotenv()
 
+class OAuthHandler(BaseHTTPRequestHandler):
+    code = None
+
+    def do_GET(self):
+        parsed = urlparse(self.path)
+        if parsed.path == "/callback":
+            query = parse_qs(parsed.query)
+            OAuthHandler.code = query.get("code", [None])[0]
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"Auth complete. You can close this tab.")
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def log_message(self, format, *args):
+        return
+
 @dataclass
 class Client:
     BASE_URL: str = "https://developer.api.autodesk.com"
@@ -118,7 +136,7 @@ class Client:
             tokens = self._get_tokens(OAuthHandler.code)
             self._save_tokens(tokens)
             self.access_token = tokens["access_token"]
-            
+
     @property
     def headers(self) -> Dict[str, str]:
         "Generate headers for the given path"
