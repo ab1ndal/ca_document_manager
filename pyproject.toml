@@ -6,17 +6,17 @@ authors = [
     {name = "ab1ndal",email = "bindal.abhinav@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11, <3.15"
 dependencies = [
     "requests (>=2.32.5,<3.0.0)",
     "python-dotenv (>=1.1.1,<2.0.0)",
     "pandas (>=2.3.3,<3.0.0)",
-    "pywebview (>=6.1,<7.0)"
+    "pywebview (>=6.1,<7.0)",
+    "pyinstaller (>=6.17.0,<7.0.0)"
 ]
 
 [tool.poetry]
-packages = [{include = "ca_document_manager", from = "src"}]
-
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

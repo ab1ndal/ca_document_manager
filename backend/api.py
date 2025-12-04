@@ -1,8 +1,25 @@
-from platforms.acc.client import Client
-from platforms.acc.rfis import search_rfis
+from backend.platforms.acc.client import Client
+from backend.platforms.acc.rfis import search_rfis
 import pandas as pd
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+import sys
+import os
+
+def load_env():
+    if getattr(sys, 'frozen', False):
+        # Running inside PyInstaller
+        base_path = sys._MEIPASS    # internal temp folder
+    else:
+        # Running normally
+        base_path = os.path.dirname(os.path.abspath(__file__))
+
+    env_path = os.path.join(os.path.dirname(base_path), ".env")
+    print("Loading ENV from:", env_path)
+    load_dotenv(env_path)
+
+load_env()
 
 class API:
     def greet(self, name:str):

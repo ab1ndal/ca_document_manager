@@ -4,9 +4,10 @@ function App() {
   const [message, setMessage] = useState("");
 
   async function callPython() {
-    const result = await window.pywebview.api.greet("Abhinav");
-    setMessage(result);
-    console.log("Received from Python:", result);
+    const result = await fetch("http://localhost:8000/greet/Abhinav");
+    const data = await result.json();
+    setMessage(data.message);
+    console.log("Received from Python:", data);
   }
 
   return (

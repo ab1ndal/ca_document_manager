@@ -1,7 +1,7 @@
 # Source: ca_document_manager\platforms\acc\rfis.py
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from .client import Client
+from backend.platforms.acc.client import Client
 
 def create_date_range(start: Optional[datetime]=None, end: Optional[datetime]=None)->Optional[str]:
     if not start and not end:
