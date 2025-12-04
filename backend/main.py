@@ -1,5 +1,5 @@
 import webview
-from backend.api import API
+from api import API
 
 def start():
     api = API()

@@ -1,5 +1,5 @@
-from backend.platforms.acc.client import Client
-from backend.platforms.acc.rfis import search_rfis
+from platforms.acc.client import Client
+from platforms.acc.rfis import search_rfis
 import pandas as pd
 from datetime import datetime
 from zoneinfo import ZoneInfo
