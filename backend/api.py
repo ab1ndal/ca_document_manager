@@ -5,6 +5,9 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 class API:
+    def greet(self, name:str):
+        return f"Hello {name}, from the python backend!"
+        
     def __init__(self):
         self.client = Client()
 
