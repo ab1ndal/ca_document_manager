@@ -1,4 +1,4 @@
-# Source: src\ca_document_manager\platforms\acc\client.py
+# Source: ca_document_manager\platforms\acc\client.py
 import json
 from dataclasses import dataclass
 from typing import Optional, Dict, Any
