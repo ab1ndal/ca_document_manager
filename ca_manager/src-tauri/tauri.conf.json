@@ -14,7 +14,8 @@
       {
         "title": "ca_manager",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "resizable": true
       }
     ],
     "security": {
@@ -31,5 +32,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "python": {
+      "scriptPaths": ["../python_backend"],
+      "virtualEnv": "../python_backend/.venv"
+    }
   }
 }
