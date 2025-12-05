@@ -20,6 +20,24 @@ def greet(name):
 def options_handler(path):
     return {}  # reply to OPTIONS preflight
 
+@app.post("/api/login")
+def login():
+    try:
+        response.content_type = "application/json"
+        print("Entering Login Route")
+        result = api.login()
+        return result
+    except Exception as e:
+        response.status = 500
+        return {"error": str(e)}
+
+@app.get("/api/auth/status")
+def auth_status():
+    response.content_type = "application/json"
+    tokens = api.client._load_tokens()
+    logged_in = bool(tokens and tokens.get("access_token"))
+    return {"logged_in": logged_in}
+
 def start_api():
     pass
 

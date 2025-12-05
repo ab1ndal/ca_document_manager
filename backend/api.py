@@ -6,6 +6,9 @@ from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 import sys
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 def load_env():
     if getattr(sys, 'frozen', False):
@@ -30,6 +33,7 @@ class API:
 
     def login(self):
         try:
+            print("Trying Client Login")
             self.client.login()
         except Exception as e:
             logger.error(f"[login] Login failed with error: {e}")

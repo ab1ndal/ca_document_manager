@@ -42,8 +42,8 @@ class Client:
         "Initialize the ACC Client"
         self.client_id = os.getenv("APS_CLIENT_ID")
         self.client_secret = os.getenv("APS_CLIENT_SECRET")
-        self.server = os.getenv("APS_SERVER", "127.0.0.1")
-        self.port = os.getenv("APS_PORT", 9000)
+        self.server = os.getenv("APS_SERVER", "localhost")
+        self.port = 9000
         self.redirect_uri = f"http://{self.server}:{self.port}/callback"
         self.project_id = os.getenv("ACC_PROJECT_ID")
         self.token_file = os.getenv("APS_TOKEN_FILE", "aps_token.json")
@@ -63,9 +63,11 @@ class Client:
     def _load_tokens(self):
         "Load tokens from file"
         try:
+            print("Loading tokens")
             with open(self.token_file, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
+            print("Token File Not Found")
             return None
 
     def _save_tokens(self, tokens: Dict[str, Any]):
@@ -75,8 +77,10 @@ class Client:
 
     def _refresh_tokens(self):
         "Refresh tokens"
+        print("Checking refresh tokens")
         stored = self._load_tokens()
         if not stored or "refresh_token" not in stored:
+            print("No refresh token found")
             return False
         url = self._url("authentication/v2/token")
         body = {
@@ -111,9 +115,12 @@ class Client:
         return r.json()
 
     def login(self):
+        print("In the client login")
         if not self._refresh_tokens():
+            print("Starting a new server")
             server = HTTPServer((self.server, self.port), OAuthHandler)
             threading.Thread(target=server.serve_forever, daemon=True).start()
+            print("Server started")
             scopes = ["data:read"]
             auth_url = self._url("authentication/v2/authorize")
             params = {
@@ -123,6 +130,7 @@ class Client:
                 "scope": " ".join(scopes),
             }
             url = auth_url + "?" + urlencode(params)
+            print("Opening URL")
             webbrowser.open(url)
 
             for _ in range(60):
