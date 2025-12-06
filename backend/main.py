@@ -38,8 +38,22 @@ def auth_status():
     logged_in = bool(tokens and tokens.get("access_token"))
     return {"logged_in": logged_in}
 
-def start_api():
-    pass
+@app.post("/api/rfis")
+def get_rfis():
+    response.content_type = "application/json"
+    try:
+        filters = request.json or {}
+        print("Incomming Filters in main:", filters)
+        items = api.get_rfis(filters)
+        print(f"returned {len(items)} RFIs")
+        return {"items": items}
+    except Exception as e:
+        import traceback
+        print("\n=== ERROR in /api/rfis ===")
+        traceback.print_exc()
+        response.status = 500
+        return {"error": str(e)}
+
 
 if __name__ == "__main__":
     run(app, host="localhost", port=8000)

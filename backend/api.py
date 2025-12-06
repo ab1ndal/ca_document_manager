@@ -40,41 +40,55 @@ class API:
             raise
         return {"status": "ok"}
 
-    def get_rfis(self, search_text=None, activity_after=None, limit=100, offset=0):
+    def get_rfis(self, filters):
+        search_text = filters.get("searchText", None)
+        activity_after = filters.get("updatedAfter", None)
+        limit = filters.get("limit", 100)
+
+        print("Entered innermost layers", filters)
+
+        
         PT = ZoneInfo("America/Los_Angeles")
         UTC = ZoneInfo("UTC")
         if activity_after:
+            print("activity_after", activity_after)
+            print("Type of activity_after", type(activity_after))
             # Parse user input as Pacific Time
             # Expecting: yyyy-mm-ddTHH:MM
-            dt_local = datetime.fromisoformat(activity_after)
-            dt_local = dt_local.replace(tzinfo=PT)
+            #dt_local = datetime.fromisoformat(activity_after)
+            #dt_local = dt_local.replace(tzinfo=PT)
 
             # Convert to UTC ISO8601 string (ACC requires UTC)
-            dt_utc = dt_local.astimezone(UTC)
-            after_iso = dt_utc.isoformat(timespec="seconds")
+            #dt_utc = dt_local.astimezone(UTC)
+            #after_iso = dt_utc.isoformat(timespec="seconds")
 
             # 1. Search by createdAt >= PT time (converted to UTC)
+            print("Searching the RFIs Part 1")
             created_results = search_rfis(
                 self.client,
                 search_text=search_text,
-                created_after=after_iso,
+                created_after=activity_after,
                 updated_after=None,
-                limit=limit,
-                offset=offset
+                limit=limit
             )
 
+            print(created_results)
+
             # 2. Search by updatedAt >= PT time (converted to UTC)
+            print("Searching the RFIs Part 2")
             updated_results = search_rfis(
                 self.client,
                 search_text=search_text,
                 created_after=None,
-                updated_after=after_iso,
-                limit=limit,
-                offset=offset
+                updated_after=activity_after,
+                limit=limit
             )
+
+            print(updated_results)
 
             # Merge both by RFI ID
             combined = {r["id"]: r for r in (created_results + updated_results)}
+            print(combined)
             return list(combined.values())
 
         # No date provided → default search

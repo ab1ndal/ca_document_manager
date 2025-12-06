@@ -176,6 +176,7 @@ class Client:
         url = self._url(path)
         headers = self.headers
         r = requests.post(url, headers=headers, json=body)
+        print(r)
 
         if r.status_code != 200:
             logger.error(f"POST failed with status code {r.status_code}")

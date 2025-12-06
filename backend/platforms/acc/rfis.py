@@ -2,16 +2,24 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from backend.platforms.acc.client import Client
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_date_range(start: Optional[datetime]=None, end: Optional[datetime]=None)->Optional[str]:
     if not start and not end:
         return None
     start_date, end_date = "", ""
     if start:
-        start_date = f"{start.isoformat()}Z"
+        start_date = f"{start}:00Z"
     if end:
-        end_date = f"{end.isoformat()}Z"
-    return f"{start_date}..{end_date}"
+        end_date = f"{end}:00Z"
+    if start and end:
+        return f"{start_date}..{end_date}"
+    elif start:
+        return f"{start_date}..9999-12-31T23:59:59Z"
+    elif end:
+        return f"..{end_date}"
 
 def search_rfis(
     client: Client, 
@@ -27,11 +35,11 @@ def search_rfis(
 
     # Create filters
     filters = {
-        "status": ["open", "openRev1", "openRev2"],
-        "officialResponseStatus": ["unanswered"],
+        "status": ["open", "openRev1", "openRev2"]
+        #"officialResponseStatus": ["UNANSWERED"],
     }
 
-    filters["assignedTo"] = client.get_user_id()
+    filters["assignedTo"] = [client.get_user_id()]
 
     if created_after:
         filters["createdAt"] = create_date_range(start=created_after)
