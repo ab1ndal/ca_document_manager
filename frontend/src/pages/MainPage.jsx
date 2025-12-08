@@ -6,11 +6,14 @@ import FiltersPanel from "@/components/filters/FiltersPanel";
 
 const API_BASE = "http://localhost:8000";
 
-export default function MainPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginInProgress, setLoginInProgress] = useState(false);
+export default function MainPage({
+  isLoggedIn,
+  onLogin,
+  onLogout,
+  loginInProgress,
+  onAuthFailure
+}) {
   const [showSidebar, setShowSidebar] = useState(true);
-
   const [filters, setFilters] = useState({
     searchText: "",
     updatedAfter: "",
@@ -27,33 +30,28 @@ export default function MainPage() {
     };
   }, []);
 
-  const handleLogin = async () => {
-    try {
-      setLoginInProgress(true);
-      const res = await fetch(`${API_BASE}/api/login`, { method: "POST" });
-      if (res.ok) {
-        const statusRes = await fetch(`${API_BASE}/api/auth/status`);
-        const statusData = await statusRes.json();
-        setIsLoggedIn(Boolean(statusData.logged_in));
-      }
-    } finally {
-      setLoginInProgress(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("aps_token");
-    setIsLoggedIn(false);
-  };
-
   const handleSearch = async () => {
-    const res = await fetch(`${API_BASE}/api/rfis`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(filters)
-    });
-    const data = await res.json();
-    console.log(data);
+    try {
+      const res = await fetch(`${API_BASE}/api/rfis`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(filters)
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        onAuthFailure?.();
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Unable to fetch RFIs.");
+      }
+
+      const data = await res.json();
+      console.log(data);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -62,14 +60,8 @@ export default function MainPage() {
 
         {/* TOP RIBBON */}
         <header className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-6 py-4 shadow-sm backdrop-blur">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-200 via-sky-200 to-indigo-200 text-base font-semibold text-slate-800 shadow-inner">
-              CA
-            </div>
-            <div className="leading-tight">
+          <div className="flex items-center gap-3 leading-tight">
               <h1 className="text-xl font-semibold tracking-tight">CA Document Manager</h1>
-              <p className="text-sm text-slate-500">ACC RFI Dashboard</p>
-            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -79,11 +71,11 @@ export default function MainPage() {
             </div>
 
             {!isLoggedIn ? (
-              <Button onClick={handleLogin} disabled={loginInProgress} className="shadow-sm">
+              <Button onClick={onLogin} disabled={loginInProgress} className="shadow-sm">
                 {loginInProgress ? "Signing in..." : "Sign In"}
               </Button>
             ) : (
-              <Button variant="outline" onClick={handleLogout} className="shadow-sm">
+              <Button variant="outline" onClick={onLogout} className="shadow-sm">
                 Logout
               </Button>
             )}

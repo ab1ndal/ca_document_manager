@@ -63,11 +63,11 @@ class Client:
     def _load_tokens(self):
         "Load tokens from file"
         try:
-            print("Loading tokens")
+            #print("Loading tokens")
             with open(self.token_file, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
-            print("Token File Not Found")
+            #print("Token File Not Found")
             return None
 
     def _save_tokens(self, tokens: Dict[str, Any]):
@@ -77,10 +77,10 @@ class Client:
 
     def _refresh_tokens(self):
         "Refresh tokens"
-        print("Checking refresh tokens")
+        #print("Checking refresh tokens")
         stored = self._load_tokens()
         if not stored or "refresh_token" not in stored:
-            print("No refresh token found")
+            #print("No refresh token found")
             return False
         url = self._url("authentication/v2/token")
         body = {
@@ -92,7 +92,7 @@ class Client:
         new_tokens = requests.post(url, data=body)
         new_tokens.raise_for_status()
         if new_tokens.status_code != 200:
-            print("Refresh failed:", new_tokens.text)
+            #print("Refresh failed:", new_tokens.text)
             return False
         if new_tokens:
             self._save_tokens(new_tokens.json())
@@ -115,12 +115,12 @@ class Client:
         return r.json()
 
     def login(self):
-        print("In the client login")
+        #print("In the client login")
         if not self._refresh_tokens():
-            print("Starting a new server")
+            #print("Starting a new server")
             server = HTTPServer((self.server, self.port), OAuthHandler)
             threading.Thread(target=server.serve_forever, daemon=True).start()
-            print("Server started")
+            #print("Server started")
             scopes = ["data:read"]
             auth_url = self._url("authentication/v2/authorize")
             params = {
@@ -130,7 +130,7 @@ class Client:
                 "scope": " ".join(scopes),
             }
             url = auth_url + "?" + urlencode(params)
-            print("Opening URL")
+            #print("Opening URL")
             webbrowser.open(url)
 
             for _ in range(60):
@@ -176,7 +176,7 @@ class Client:
         url = self._url(path)
         headers = self.headers
         r = requests.post(url, headers=headers, json=body)
-        print(r)
+        #print(r)
 
         if r.status_code != 200:
             logger.error(f"POST failed with status code {r.status_code}")
