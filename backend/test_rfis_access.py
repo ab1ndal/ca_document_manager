@@ -15,7 +15,7 @@ load_dotenv()
 CLIENT_ID = os.getenv("APS_CLIENT_ID")
 CLIENT_SECRET = os.getenv("APS_CLIENT_SECRET")
 REDIRECT_URI = os.getenv("APS_REDIRECT_URI", "http://127.0.0.1:9000/callback")
-PROJECT_ID = os.getenv("ACC_PROJECT_ID")  # e.g. b473ef72-b524-429c-bb7e-a657af7433ea
+PROJECT_ID = os.getenv("ACC_PROJECT_ID")
 TOKEN_FILE = os.getenv("APS_TOKEN_FILE", "aps_token.json")
 
 

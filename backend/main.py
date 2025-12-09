@@ -1,6 +1,7 @@
 from backend.api import API
 from bottle import Bottle, run, request, response
 from backend.cors import enable_cors
+import re
 
 app = Bottle()
 api = API()
@@ -10,11 +11,6 @@ def add_cors_headers():
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Origin, Content-Type, Accept"
-
-
-@app.get("/greet/<name>")
-def greet(name):
-    return {"message": api.greet(name)}
 
 @app.route("/<path:path>", method=["OPTIONS"])
 def options_handler(path):
@@ -48,6 +44,13 @@ def get_rfis():
         print(f"returned {len(items)} RFIs")
         return {"items": items}
     except Exception as e:
+        error_str = str(e)
+        match = re.search(r"status code (\d+)", error_str)
+        if match:
+            status_code = int(match.group(1))
+            response.status = status_code
+            print(f"API Error ({status_code}): {error_str}")
+            return {"error": error_str}
         import traceback
         print("\n=== ERROR in /api/rfis ===")
         traceback.print_exc()

@@ -25,8 +25,6 @@ def load_env():
 load_env()
 
 class API:
-    def greet(self, name:str):
-        return f"Hello {name}, from the python backend!"
         
     def __init__(self):
         self.client = Client()
@@ -43,8 +41,10 @@ class API:
         search_text = filters.get("searchText", None)
         activity_after = filters.get("updatedAfter", None)
         limit = filters.get("limit", 100)
-
+        
         print("Inside API call")
+
+        self.client.define_user()
 
         if activity_after:
             # 1. Search by createdAt >= PT time (converted to UTC)

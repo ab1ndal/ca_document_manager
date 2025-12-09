@@ -48,13 +48,15 @@ class Client:
         self.project_id = os.getenv("ACC_PROJECT_ID")
         self.token_file = os.getenv("APS_TOKEN_FILE", "aps_token.json")
         self.access_token = None
-        self.user_id=[self.get_user_id()]
+        self.user_id = None
         #self.project_id = project_id
         if not self.client_id or not self.client_secret:
             raise ValueError("APS_CLIENT_ID and APS_CLIENT_SECRET are required")
         if not self.project_id:
             raise ValueError("ACC_PROJECT_ID is required")
 
+    def define_user(self):
+        self.user_id=[self.get_user_id()]
     def _url(self, path: str) -> str:
         "Generate a full URL for the given path"
         if not path.startswith("/"):
