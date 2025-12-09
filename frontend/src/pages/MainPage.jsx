@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import FiltersPanel from "@/components/filters/FiltersPanel";
 import RFITable from "@/components/RFITable";
+import ExportButton from "@/components/ExportButton";
 
 const API_BASE = "http://localhost:8000";
 
@@ -137,7 +138,7 @@ export default function MainPage({
                   <Button variant="outline" onClick={handleSearch} className="shadow-sm">
                     Refresh
                   </Button>
-                  <Button variant="secondary" className="shadow-sm">Export</Button>
+                  <ExportButton data={results} />
                 </div>
               </CardHeader>
 
