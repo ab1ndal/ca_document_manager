@@ -102,7 +102,7 @@ const RFITable = ({ data }) => {
     wrapText: true,
     autoHeight: true,
     headerClass: "justify-center", // <--- Centers the Header Text
-    cellStyle: { wordBreak: 'normal', lineHeight: '1.6', paddingTop: '12px', paddingBottom: '12px' } 
+    cellStyle: { wordBreak: 'normal', lineHeight: '1.6', paddingTop: '12px', paddingBottom: '12px', textAlign:'left', whiteSpace:'pre-wrap' } 
   }), []);
 
   // Inline styles for the Legend Dots (Bypasses Tailwind issues)
