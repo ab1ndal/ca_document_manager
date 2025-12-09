@@ -39,7 +39,7 @@ def search_rfis(
     }
 
     print("Fetching user id")
-    filters["assignedTo"] = [client.get_user_id()]
+    filters["assignedTo"] = client.user_id
     print("Obtained user id")
 
     if created_after:
@@ -64,7 +64,7 @@ def search_rfis(
         "search": search_text,
         "sort":[{
             "field": "createdAt",
-            "order": "DESC"
+            "order": "ASC"
         }],
         "filter": filters,
         "fields": fields_list

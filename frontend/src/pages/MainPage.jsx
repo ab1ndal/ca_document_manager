@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import FiltersPanel from "@/components/filters/FiltersPanel";
+import RFITable from "@/components/RFITable";
 
 const API_BASE = "http://localhost:8000";
 
@@ -13,6 +14,7 @@ export default function MainPage({
   loginInProgress,
   onAuthFailure
 }) {
+  const [results, setResults] = useState([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [filters, setFilters] = useState({
     searchText: "",
@@ -49,6 +51,7 @@ export default function MainPage({
 
       const data = await res.json();
       console.log(data);
+      setResults(data.items || []);
     } catch (err) {
       console.error(err);
     }
@@ -122,12 +125,12 @@ export default function MainPage({
           </aside>
 
           {/* RESULTS */}
-          <main className="flex-1">
+          <main className="flex-1 min-w-0">
             <Card className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-[0.08em] text-slate-400">Overview</p>
-                  <CardTitle className="text-xl">RFI Results</CardTitle>
+                  <CardTitle className="text-xl">RFI Results ({results.length})</CardTitle>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -138,11 +141,18 @@ export default function MainPage({
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1">
-                <div className="flex h-full flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center text-sm text-slate-500">
-                  <p className="text-base font-medium text-slate-700">RFIs will appear on the right pane</p>
-                  <p className="text-sm text-slate-500">Run a search or refresh to pull the latest results.</p>
-                </div>
+              <CardContent className="flex-1 p-0 overflow-hidden"> 
+                 {/* 4. Render the Table if we have data, otherwise show placeholder */}
+                 {results.length > 0 ? (
+                    <div className="h-full w-full">
+                       <RFITable data={results} />
+                    </div>
+                 ) : (
+                    <div className="m-6 flex h-[calc(100%-3rem)] flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center text-sm text-slate-500 justify-center items-center">
+                      <p className="text-base font-medium text-slate-700">RFIs will appear here</p>
+                      <p className="text-sm text-slate-500">Run a search or refresh to pull the latest results.</p>
+                    </div>
+                 )}
               </CardContent>
             </Card>
           </main>

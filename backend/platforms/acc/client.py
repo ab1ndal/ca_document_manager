@@ -48,6 +48,7 @@ class Client:
         self.project_id = os.getenv("ACC_PROJECT_ID")
         self.token_file = os.getenv("APS_TOKEN_FILE", "aps_token.json")
         self.access_token = None
+        self.user_id=[self.get_user_id()]
         #self.project_id = project_id
         if not self.client_id or not self.client_secret:
             raise ValueError("APS_CLIENT_ID and APS_CLIENT_SECRET are required")
