@@ -18,7 +18,7 @@ def load_env():
         # Running normally
         base_path = os.path.dirname(os.path.abspath(__file__))
 
-    env_path = os.path.join(os.path.dirname(base_path), ".env")
+    env_path = os.path.join(base_path, ".env")
     #print("Loading ENV from:", env_path)
     load_dotenv(env_path)
 
