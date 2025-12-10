@@ -59,7 +59,7 @@ npm run build
 ## Package desktop exe
 
 ```bash
-poetry run pyinstaller ca_manager.spec --clean
+poetry run pyinstaller ca_manager.spec --noconfirm --clean
 ```
 
 ## Tests
