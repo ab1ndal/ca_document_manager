@@ -140,7 +140,7 @@ class Client:
                 if OAuthHandler.code:
                     break
                 time.sleep(1)
-            server.shutdown()
+            threading.Thread(target=server.shutdown, daemon=True).start()
 
             if not OAuthHandler.code:
                 raise Exception("No auth code received") 
