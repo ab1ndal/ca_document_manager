@@ -32,23 +32,35 @@ const ExportButton = ({ data }) => {
     });
 
     // 3. Combine and Download
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    
-    // --- UPDATED FILENAME LOGIC ---
+    const csvBody = [headers.join(","), ...rows].join("\n");
+    // Add BOM for Excel
+    const csvContent = "\uFEFF" + csvBody;
+
     // Creates format: "RFI_Export_2025-12-09_13-45.csv"
     const now = new Date();
     const datePart = now.toISOString().slice(0, 10); // YYYY-MM-DD
     const timePart = now.toTimeString().slice(0, 5).replace(':', '-'); // HH-MM
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", `RFI_Export_${datePart}_${timePart}.csv`);
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = `RFI_Export_${datePart}_${timePart}.csv`;
+
+    if (window.pywebview) {
+        // DESKTOP MODE: Send data to Python
+        // pywebview injects the 'pywebview' object automatically
+        window.pywebview.api.save_file(csvContent, filename)
+            .then(success => {
+                if(success) console.log("File saved successfully via Python bridge");
+            })
+            .catch(err => console.error("Bridge Error:", err));
+    } else {
+        // BROWSER MODE: Standard Download
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
   };
 
   return (

@@ -20,7 +20,7 @@ def options_handler(path):
 def login():
     try:
         response.content_type = "application/json"
-        print("Entering Login Route")
+        #print("Entering Login Route")
         result = api.login()
         return result
     except Exception as e:
@@ -39,9 +39,9 @@ def get_rfis():
     response.content_type = "application/json"
     try:
         filters = request.json or {}
-        print("Incomming Filters in main:", filters)
+        #print("Incomming Filters in main:", filters)
         items = api.get_rfis(filters)
-        print(f"returned {len(items)} RFIs")
+        #print(f"returned {len(items)} RFIs")
         return {"items": items}
     except Exception as e:
         error_str = str(e)
@@ -49,7 +49,7 @@ def get_rfis():
         if match:
             status_code = int(match.group(1))
             response.status = status_code
-            print(f"API Error ({status_code}): {error_str}")
+            #print(f"API Error ({status_code}): {error_str}")
             return {"error": error_str}
         import traceback
         print("\n=== ERROR in /api/rfis ===")

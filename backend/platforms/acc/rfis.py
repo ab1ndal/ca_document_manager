@@ -38,9 +38,9 @@ def search_rfis(
         "status": ["open", "openRev1", "openRev2"]
     }
 
-    print("Fetching user id")
+    #print("Fetching user id")
     filters["assignedTo"] = client.user_id
-    print("Obtained user id")
+    #print("Obtained user id")
 
     if created_after:
         filters["createdAt"] = create_date_range(start=created_after)
@@ -71,7 +71,7 @@ def search_rfis(
     }
 
     try:
-        print("Starting Search")
+        #print("Starting Search")
         response = client.search_rfis(body=body)
     except Exception as e:
         logger.error(f"[search_rfis] Search RFIs failed with error: {e}")

@@ -42,13 +42,13 @@ class API:
         activity_after = filters.get("updatedAfter", None)
         limit = filters.get("limit", 100)
         
-        print("Inside API call")
-
-        self.client.define_user()
+        #print("Inside API call")
+        if not self.client.user_id:
+            self.client.define_user()
 
         if activity_after:
             # 1. Search by createdAt >= PT time (converted to UTC)
-            print("Searching via creation date")
+            #print("Searching via creation date")
             created_results = search_rfis(
                 self.client,
                 search_text=search_text,
@@ -58,7 +58,7 @@ class API:
             )
 
             # 2. Search by updatedAt >= PT time (converted to UTC)
-            print("Searching via Update date")
+            #print("Searching via Update date")
             updated_results = search_rfis(
                 self.client,
                 search_text=search_text,
@@ -69,7 +69,7 @@ class API:
 
             # Merge both by RFI ID
             combined = {r["customIdentifier"]: r for r in (created_results + updated_results)}
-            print(combined)
+            #print(combined)
             return list(combined.values())
 
         # No date provided → default search
