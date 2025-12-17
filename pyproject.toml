@@ -13,7 +13,8 @@ dependencies = [
     "pandas (>=2.3.3,<3.0.0)",
     "pywebview (>=6.1,<7.0)",
     "pyinstaller (>=6.17.0,<7.0.0)",
-    "pythonnet (>=3.0.5,<4.0.0)"
+    "pythonnet (>=3.0.5,<4.0.0)",
+    "waitress (>=3.0.2,<4.0.0)"
 ]
 
 [tool.poetry]

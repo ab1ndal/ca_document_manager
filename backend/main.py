@@ -1,6 +1,6 @@
 from backend.api import API
 from bottle import Bottle, run, request, response
-from backend.cors import enable_cors
+#from backend.cors import enable_cors
 import re
 import os
 
