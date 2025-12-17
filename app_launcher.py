@@ -81,7 +81,7 @@ def run():
         url=FRONTEND_ENTRY, # Point to the HTML file, not localhost:5173
         js_api=api
     )
-    webview.start(debug=False, gui="edgechromium")
+    webview.start(debug=False, gui="qt")
 
 if __name__ == "__main__":
     run()

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import MainPage from "./pages/MainPage";
 import LoginPage from "./pages/LoginPage";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
