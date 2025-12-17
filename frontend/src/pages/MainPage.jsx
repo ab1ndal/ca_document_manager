@@ -6,7 +6,7 @@ import FiltersPanel from "@/components/filters/FiltersPanel";
 import RFITable from "@/components/RFITable";
 import ExportButton from "@/components/ExportButton";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 export default function MainPage({
   isLoggedIn,

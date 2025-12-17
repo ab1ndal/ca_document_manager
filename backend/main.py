@@ -21,7 +21,7 @@ def options_handler(path):
 def login():
     try:
         response.content_type = "application/json"
-        #print("Entering Login Route")
+        print("Entering Login Route")
         result = api.login()
         return result
     except Exception as e:
