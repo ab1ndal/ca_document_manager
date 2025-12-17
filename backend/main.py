@@ -2,6 +2,7 @@ from backend.api import API
 from bottle import Bottle, run, request, response
 from backend.cors import enable_cors
 import re
+import os
 
 app = Bottle()
 api = API()
@@ -59,4 +60,8 @@ def get_rfis():
 
 
 if __name__ == "__main__":
-    run(app, host="localhost", port=8000)
+    run(
+        app, 
+        host="0.0.0.0", 
+        port=int(os.getenv("PORT", 8000))
+    )
