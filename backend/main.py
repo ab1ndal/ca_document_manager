@@ -1,5 +1,5 @@
 from backend.api import API
-from bottle import Bottle, run, request, response
+from bottle import Bottle, run, request, response, redirect
 #from backend.cors import enable_cors
 import re
 import os
@@ -28,7 +28,7 @@ def options_handler(path):
 def login():
     session_id = request.get_cookie("session_id")
 
-    IS_PROD = os.getenv("ENV") == "PROD"
+    IS_PROD = request.urlparts.scheme == "https"
 
     if not session_id:
         session_id = str(uuid.uuid4())
@@ -45,8 +45,8 @@ def login():
     result = api.login()
 
     if "auth_url" in result:
-        return bottle.redirect(result['auth_url'])
-    return bottle.redirect(os.getenv("FRONTEND_URL"))
+        return redirect(result['auth_url'])
+    return redirect(os.getenv("FRONTEND_URL"))
 
 @app.get("/callback")
 def callback():
@@ -58,7 +58,7 @@ def callback():
     api.client.set_session(session_id)
     api.client.handle_callback(request.query.code)
 
-    return bottle.redirect(os.getenv("FRONTEND_URL"))
+    return redirect(os.getenv("FRONTEND_URL"))
 
 @app.post("/api/logout")
 def logout():
