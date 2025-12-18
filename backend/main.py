@@ -24,7 +24,7 @@ def add_cors_headers():
 def options_handler(path):
     return {}  # reply to OPTIONS preflight
 
-@app.post("/api/login")
+@app.get("/api/login")
 def login():
     session_id = request.get_cookie("session_id")
 
