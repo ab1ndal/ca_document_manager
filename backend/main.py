@@ -37,7 +37,8 @@ def login():
             session_id,
             httponly=True,
             secure=IS_PROD,
-            samesite="None" if IS_PROD else "Lax"
+            samesite="None" if IS_PROD else "Lax",
+            path="/"
         )
 
     api.client.set_session(session_id)
