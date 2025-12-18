@@ -42,7 +42,11 @@ def login():
         )
 
     api.client.set_session(session_id)
-    return api.login()
+    result = api.login()
+
+    if "auth_url" in result:
+        return bottle.redirect(result['auth_url'])
+    return bottle.redirect(os.getenv("FRONTEND_URL"))
 
 @app.get("/callback")
 def callback():

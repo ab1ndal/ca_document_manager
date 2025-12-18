@@ -10,7 +10,7 @@ function App() {
   const [loginInProgress, setLoginInProgress] = useState(false);
   const [loginError, setLoginError] = useState("");
 
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = async (retries = 1) => {
     setCheckingAuth(true);
     try {
       const res = await fetch(`${API_BASE}/api/auth/status`,{
@@ -19,10 +19,16 @@ function App() {
       if (res.ok) {
         const data = await res.json();
         console.log(data)
-        setIsLoggedIn(Boolean(data.logged_in));
-      } else {
-        setIsLoggedIn(false);
+        if (data.logged_in){
+          setIsLoggedIn(true);
+          return;
+        }
       }
+      if (retries > 0) {
+      setTimeout(() => checkAuthStatus(retries - 1), 500);
+      return;
+    }
+    setIsLoggedIn(false);
     } catch (err) {
       setLoginError(err.message || "Failed to check Auth Status")
       console.log(`Error: ${err}`)
@@ -38,43 +44,7 @@ function App() {
 
   const handleLogin = async () => {
     setLoginError("");
-    try {
-      console.log("Logging in....")
-      setLoginInProgress(true);
-      const res = await fetch(`${API_BASE}/api/login`, { 
-        method: "POST", 
-        credentials: "include" 
-      });
-      if (!res.ok) {
-        throw new Error("Login failed. Please try again.");
-      }
-
-      const data = await res.json();
-      if (data.auth_url) {
-        window.location.href = data.auth_url;
-        return;
-      }
-
-      const statusRes = await fetch(`${API_BASE}/api/auth/status`, {
-        credentials: "include"
-      });
-      if (!statusRes.ok) {
-        throw new Error("Unable to confirm login status.");
-      }
-      const statusData = await statusRes.json();
-      const logged = Boolean(statusData.logged_in);
-      setIsLoggedIn(logged);
-      if (!logged) {
-        throw new Error("Authentication token missing or invalid.");
-      }
-    } catch (err) {
-      console.log(`Error: ${err}`)
-      setLoginError(err.message || "Unable to login right now.");
-      setIsLoggedIn(false);
-    } finally {
-      setLoginInProgress(false);
-      setCheckingAuth(false);
-    }
+    window.location.href = `${API_BASE}/api/login`;
   };
 
   const handleLogout = async () => {
@@ -83,7 +53,6 @@ function App() {
         method: "POST", 
         credentials: "include" 
       });
-      localStorage.removeItem("aps_token");
     } catch (_) {
       // ignore network errors on logout
     }
