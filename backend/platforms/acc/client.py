@@ -4,18 +4,19 @@ from dataclasses import dataclass
 from typing import Optional, Dict, Any
 import logging
 import os
-import threading
-import time
-import webbrowser
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs, urlencode
+#import threading
+#import time
+#import webbrowser
+#from http.server import HTTPServer, BaseHTTPRequestHandler
+#from urllib.parse import urlparse, parse_qs, urlencode
 import requests
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 load_dotenv()
-
+"""
 class OAuthHandler(BaseHTTPRequestHandler):
     code = None
 
@@ -33,7 +34,7 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         return
-
+"""
 @dataclass
 class Client:
     BASE_URL: str = "https://developer.api.autodesk.com"
@@ -42,9 +43,9 @@ class Client:
         "Initialize the ACC Client"
         self.client_id = os.getenv("APS_CLIENT_ID")
         self.client_secret = os.getenv("APS_CLIENT_SECRET")
-        self.server = os.getenv("APS_SERVER", "localhost")
-        self.port = 9000
-        self.redirect_uri = f"http://{self.server}:{self.port}/callback"
+        #self.server = os.getenv("APS_SERVER", "localhost")
+        #self.port = 9000
+        self.redirect_uri = os.getenv("APS_REDIRECT_URI")
         self.project_id = os.getenv("ACC_PROJECT_ID")
         self.token_file = os.getenv("APS_TOKEN_FILE", "aps_token.json")
         self.access_token = None
@@ -54,16 +55,19 @@ class Client:
             raise ValueError("APS_CLIENT_ID and APS_CLIENT_SECRET are required")
         if not self.project_id:
             raise ValueError("ACC_PROJECT_ID is required")
+        if not self.redirect_uri:
+            raise ValueError("APS_REDIRECT_URI is required")
 
-    def define_user(self):
-        self.user_id=[self.get_user_id()]
+    #--------------------------------------------
+    #               UTILITY HELPER
+    #--------------------------------------------
     def _url(self, path: str) -> str:
         "Generate a full URL for the given path"
         if not path.startswith("/"):
             path = "/" + path
         return f"{self.BASE_URL}{path}"
 
-    def _load_tokens(self):
+    def _load_tokens(self) -> Optional[Dict[str, Any]]:
         "Load tokens from file"
         try:
             #print("Loading tokens")
@@ -77,6 +81,20 @@ class Client:
         "Save tokens to file"
         with open(self.token_file, "w") as f:
             json.dump(tokens, f)
+
+    #--------------------------------------------------
+    #            OAUTH FLOW
+    #--------------------------------------------------
+    def build_auth_url(self) -> str:
+        scopes = ["data:read"]
+        auth_url = self._url("authentication/v2/authorize")
+        params = {
+            "response_type": "code",
+            "client_id": self.client_id,
+            "redirect_uri": self.redirect_uri,
+            "scope": " ".join(scopes),
+        }
+        return auth_url + "?" + urlencode(params)
 
     def _refresh_tokens(self):
         "Refresh tokens"
@@ -115,42 +133,22 @@ class Client:
         }
         r = requests.post(url, data=data)
         r.raise_for_status()
-        return r.json()
+        tokens = r.json()
+        self._save_tokens(tokens)
+        self.access_token = tokens["access_token"]
 
-    def login(self):
-        #print("In the client login")
-        if not self._refresh_tokens():
-            #print("Starting a new server")
-            server = HTTPServer((self.server, self.port), OAuthHandler)
-            threading.Thread(target=server.serve_forever, daemon=True).start()
-            #print("Server started")
-            scopes = ["data:read"]
-            auth_url = self._url("authentication/v2/authorize")
-            params = {
-                "response_type": "code",
-                "client_id": self.client_id,
-                "redirect_uri": self.redirect_uri,
-                "scope": " ".join(scopes),
-            }
-            url = auth_url + "?" + urlencode(params)
-            #print("Opening URL")
-            webbrowser.open(url)
+    def login(self) -> Dict[str, str]:
+        """Login to the ACC API"""
+        if self._refresh_tokens():
+            return {"status": "ok"} 
+        return {"auth_url": self.build_auth_url()}
 
-            for _ in range(60):
-                if OAuthHandler.code:
-                    break
-                time.sleep(1)
-            threading.Thread(target=server.shutdown, daemon=True).start()
+    def handle_callback(self, code: str):
+        self._get_tokens(code)
 
-            if not OAuthHandler.code:
-                raise Exception("No auth code received") 
-
-            tokens = self._get_tokens(OAuthHandler.code)
-            self._save_tokens(tokens)
-            self.access_token = tokens["access_token"]
-
-        return self.access_token
-
+    #----------------------------------------------------
+    #             ACC API helpers
+    #----------------------------------------------------
     @property
     def headers(self) -> Dict[str, str]:
         "Generate headers for the given path"
@@ -169,23 +167,16 @@ class Client:
             r = requests.get(url, headers=headers)
 
         if r.status_code != 200:
-            logger.error(f"GET failed with status code {r.status_code}")
-            logger.error(r.text)
+            logger.error(f"GET failed with status code {r.status_code}L {r.text}")
             raise Exception(f"GET failed with status code {r.status_code}")
         
         return r.json()
 
     def post(self, path:str, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        url = self._url(path)
-        headers = self.headers
-        r = requests.post(url, headers=headers, json=body)
-        #print(r)
-
+        r = requests.post(self._url(path), headers=self.headers, json=body)
         if r.status_code != 200:
-            logger.error(f"POST failed with status code {r.status_code}")
-            logger.error(r.text)
+            logger.error(f"POST failed with status code {r.status_code}: {r.text}")
             raise Exception(f"POST failed with status code {r.status_code}")
-        
         return r.json()
 
     def search_rfis(self, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -205,3 +196,14 @@ class Client:
             logger.error(f"[Client] Get user ID failed with error: {e}")
             raise
         return response["user"]["id"]
+
+    def clear_tokens(self):
+        self.access_token = None
+        self.user_id = None
+        try:
+            if os.path.exists(self.token_file):
+                os.remove(self.token_file)
+        except Exception:
+            pass
+
+    

@@ -18,7 +18,6 @@ function App() {
         const data = await res.json();
         console.log(data)
         setIsLoggedIn(Boolean(data.logged_in));
-        console.log(`isLoggedIn: ${isLoggedIn}`)
       } else {
         setIsLoggedIn(false);
       }
@@ -45,6 +44,12 @@ function App() {
         throw new Error("Login failed. Please try again.");
       }
 
+      const data = await res.json();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+        return;
+      }
+
       const statusRes = await fetch(`${API_BASE}/api/auth/status`);
       if (!statusRes.ok) {
         throw new Error("Unable to confirm login status.");
@@ -65,8 +70,13 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("aps_token");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/logout`, { method: "POST" });
+      localStorage.removeItem("aps_token");
+    } catch (_) {
+      // ignore network errors on logout
+    }
     setIsLoggedIn(false);
   };
 

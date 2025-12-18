@@ -28,6 +28,30 @@ def login():
         response.status = 500
         return {"error": str(e)}
 
+@app.get("/callback")
+def callback():
+    code = request.query.get("code")
+
+    if not code:
+        response.status = 400
+        return "Missing authorization code"
+
+    try:
+        api.client.handle_callback(code)
+        return "Authentication complete. You can close this tab."
+    except Exception as e:
+        response.status = 500
+        return f"Authentication failed: {str(e)}"
+
+@app.post("/api/logout")
+def logout():
+    try:
+        api.client.clear_tokens()
+        return {"status": "logged_out"}
+    except Exception as e:
+        response.status = 500
+        return {"error": str(e)}
+
 @app.get("/api/auth/status")
 def auth_status():
     response.content_type = "application/json"

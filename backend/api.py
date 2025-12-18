@@ -31,11 +31,10 @@ class API:
 
     def login(self):
         try:
-            self.client.login()
+            return self.client.login()
         except Exception as e:
             logger.error(f"[login] Login failed with error: {e}")
             raise
-        return {"status": "ok"}
 
     def get_rfis(self, filters):
         search_text = filters.get("searchText", None)
@@ -44,7 +43,7 @@ class API:
         
         #print("Inside API call")
         if not self.client.user_id:
-            self.client.define_user()
+            self.client.user_id = [self.client.get_user_id()]
 
         if activity_after:
             # 1. Search by createdAt >= PT time (converted to UTC)
@@ -78,8 +77,7 @@ class API:
             search_text=search_text,
             created_after=None,
             updated_after=None,
-            limit=limit,
-            offset=offset
+            limit=limit
         )
 
     def get_rfi_url(self, rfi_id):
