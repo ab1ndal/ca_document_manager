@@ -63,7 +63,7 @@ def logout():
         api.client.set_session(session_id)
         api.client.clear_tokens()
 
-    response.delete_cookie("session_id")
+    response.delete_cookie("session_id", path="/")
     return {"status": "logged_out"}
 
 @app.get("/api/auth/status")
