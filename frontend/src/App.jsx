@@ -13,8 +13,11 @@ function App() {
   const checkAuthStatus = async (retries = 1) => {
     setCheckingAuth(true);
     try {
+      const sessionId = localStorage.getItem("session_id");
       const res = await fetch(`${API_BASE}/api/auth/status`,{
-        credentials: "include"
+        headers: {
+          "X-Session-Id": sessionId 
+        } 
       });
       if (res.ok) {
         const data = await res.json();
@@ -39,6 +42,17 @@ function App() {
   };
 
   useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get("session_id");
+
+  if (sessionId) {
+    localStorage.setItem("session_id", sessionId);
+    window.history.replaceState({}, "", window.location.pathname);
+  }
+  }, []);
+
+
+  useEffect(() => {
     checkAuthStatus();
   }, []);
 
@@ -49,10 +63,14 @@ function App() {
 
   const handleLogout = async () => {
     try {
+      const sessionId = localStorage.getItem("session_id");
       await fetch(`${API_BASE}/api/logout`, { 
         method: "POST", 
-        credentials: "include" 
+        headers: {
+          "X-Session-Id": sessionId 
+        } 
       });
+      localStorage.removeItem("session_id");
     } catch (_) {
       // ignore network errors on logout
     }

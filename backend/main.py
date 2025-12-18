@@ -16,9 +16,8 @@ def add_cors_headers():
     origin = request.headers.get("Origin")
     if origin:
         response.headers["Access-Control-Allow-Origin"] = origin
-    response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Origin, Content-Type, Accept"
+    response.headers["Access-Control-Allow-Headers"] = "Origin, Content-Type, Accept, X-Session-Id"
 
 @app.route("/<path:path>", method=["OPTIONS"])
 def options_handler(path):
@@ -26,31 +25,18 @@ def options_handler(path):
 
 @app.get("/api/login")
 def login():
-    session_id = request.get_cookie("session_id")
+    session_id = str(uuid.uuid4())
 
-    IS_PROD = request.urlparts.scheme == "https"
-
-    if not session_id:
-        session_id = str(uuid.uuid4())
-        response.set_cookie(
-            "session_id",
-            session_id,
-            httponly=True,
-            secure=IS_PROD,
-            samesite="None" if IS_PROD else "Lax",
-            path="/"
-        )
-
+    # Create empty session in Redis
     api.client.set_session(session_id)
-    result = api.login()
 
-    if "auth_url" in result:
-        return redirect(result['auth_url'])
-    return redirect(os.getenv("FRONTEND_URL"))
+    result = api.login(session_id)
+
+    return redirect(result["auth_url"])
 
 @app.get("/callback")
 def callback():
-    session_id = request.get_cookie("session_id")
+    session_id = request.query.state
     if not session_id:
         response.status = 400
         return "Missing session"
@@ -58,50 +44,39 @@ def callback():
     api.client.set_session(session_id)
     api.client.handle_callback(request.query.code)
 
-    return redirect(os.getenv("FRONTEND_URL"))
+    return redirect(f"{os.getenv('FRONTEND_URL')}?session_id={session_id}")
 
 @app.post("/api/logout")
 def logout():
-    session_id = request.get_cookie("session_id")
+    session_id = request.headers.get("X-Session-Id")
     if session_id:
         api.client.set_session(session_id)
         api.client.clear_tokens()
-
-    response.delete_cookie("session_id", path="/")
     return {"status": "logged_out"}
 
 @app.get("/api/auth/status")
 def auth_status():
-    session_id = request.get_cookie("session_id")
+    session_id = request.headers.get("X-Session-Id")
     if not session_id:
         return {"logged_in": False}
 
     api.client.set_session(session_id)
     tokens = api.client.load_tokens()
+
     return {"logged_in": bool(tokens)}
 
 @app.post("/api/rfis")
 def get_rfis():
-    response.content_type = "application/json"
-    try:
-        filters = request.json or {}
-        #print("Incomming Filters in main:", filters)
-        items = api.get_rfis(filters)
-        #print(f"returned {len(items)} RFIs")
-        return {"items": items}
-    except Exception as e:
-        error_str = str(e)
-        match = re.search(r"status code (\d+)", error_str)
-        if match:
-            status_code = int(match.group(1))
-            response.status = status_code
-            #print(f"API Error ({status_code}): {error_str}")
-            return {"error": error_str}
-        import traceback
-        print("\n=== ERROR in /api/rfis ===")
-        traceback.print_exc()
-        response.status = 500
-        return {"error": str(e)}
+    session_id = request.headers.get("X-Session-Id")
+    if not session_id:
+        response.status = 401
+        return {"error": "Missing session"}
+
+    api.client.set_session(session_id)
+
+    filters = request.json or {}
+    items = api.get_rfis(filters)
+    return {"items": items}
 
 
 if __name__ == "__main__":

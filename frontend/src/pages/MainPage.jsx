@@ -35,9 +35,10 @@ export default function MainPage({
 
   const handleSearch = async () => {
     try {
+      const sessionId = localStorage.getItem("session_id");
       const res = await fetch(`${API_BASE}/api/rfis`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "X-Session-Id": sessionId },
         body: JSON.stringify(filters)
       });
 

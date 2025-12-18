@@ -29,9 +29,9 @@ class API:
     def __init__(self):
         self.client = Client()
 
-    def login(self):
+    def login(self, session_id: str):
         try:
-            return self.client.login()
+            return self.client.login_with_state(session_id)
         except Exception as e:
             logger.error(f"[login] Login failed with error: {e}")
             raise

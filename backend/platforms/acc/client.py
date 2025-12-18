@@ -85,7 +85,7 @@ class Client:
     #--------------------------------------------------
     #            OAUTH FLOW
     #--------------------------------------------------
-    def build_auth_url(self) -> str:
+    def build_auth_url(self, state: str) -> str:
         scopes = ["data:read"]
         auth_url = self._url("authentication/v2/authorize")
         params = {
@@ -93,8 +93,16 @@ class Client:
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
             "scope": " ".join(scopes),
+            "state": state
         }
         return auth_url + "?" + urlencode(params)
+
+    def login_with_state(self, session_id: str):
+        if self._refresh_tokens():
+            return {"status": "ok"}
+        return {
+            "auth_url": self.build_auth_url(state=session_id)
+        }
 
     def _refresh_tokens(self):
         "Refresh tokens"
@@ -136,12 +144,6 @@ class Client:
         tokens = r.json()
         self.save_tokens(tokens)
         self.access_token = tokens["access_token"]
-
-    def login(self) -> Dict[str, str]:
-        """Login to the ACC API"""
-        if self._refresh_tokens():
-            return {"status": "ok"} 
-        return {"auth_url": self.build_auth_url()}
 
     def handle_callback(self, code: str):
         self._get_tokens(code)
