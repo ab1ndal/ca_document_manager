@@ -13,7 +13,9 @@ function App() {
   const checkAuthStatus = async () => {
     setCheckingAuth(true);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/status`);
+      const res = await fetch(`${API_BASE}/api/auth/status`,{
+        credentials: "include"
+      });
       if (res.ok) {
         const data = await res.json();
         console.log(data)
@@ -39,7 +41,10 @@ function App() {
     try {
       console.log("Logging in....")
       setLoginInProgress(true);
-      const res = await fetch(`${API_BASE}/api/login`, { method: "POST" });
+      const res = await fetch(`${API_BASE}/api/login`, { 
+        method: "POST", 
+        credentials: "include" 
+      });
       if (!res.ok) {
         throw new Error("Login failed. Please try again.");
       }
@@ -50,7 +55,9 @@ function App() {
         return;
       }
 
-      const statusRes = await fetch(`${API_BASE}/api/auth/status`);
+      const statusRes = await fetch(`${API_BASE}/api/auth/status`, {
+        credentials: "include"
+      });
       if (!statusRes.ok) {
         throw new Error("Unable to confirm login status.");
       }
@@ -72,7 +79,10 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE}/api/logout`, { method: "POST" });
+      await fetch(`${API_BASE}/api/logout`, { 
+        method: "POST", 
+        credentials: "include" 
+      });
       localStorage.removeItem("aps_token");
     } catch (_) {
       // ignore network errors on logout

@@ -5,12 +5,18 @@ import re
 import os
 import uuid
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = Bottle()
 api = API()
 
 @app.hook('after_request')
 def add_cors_headers():
-    response.headers["Access-Control-Allow-Origin"] = "*"
+    origin = request.headers.get("Origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Origin, Content-Type, Accept"
 
@@ -21,14 +27,17 @@ def options_handler(path):
 @app.post("/api/login")
 def login():
     session_id = request.get_cookie("session_id")
+
+    IS_PROD = os.getenv("ENV") == "PROD"
+
     if not session_id:
         session_id = str(uuid.uuid4())
         response.set_cookie(
             "session_id",
             session_id,
             httponly=True,
-            secure=True,
-            samesite="None"
+            secure=IS_PROD,
+            samesite="None" if IS_PROD else "Lax"
         )
 
     api.client.set_session(session_id)
@@ -44,7 +53,7 @@ def callback():
     api.client.set_session(session_id)
     api.client.handle_callback(request.query.code)
 
-    return "Authentication complete. You can close this tab."
+    return bottle.redirect(os.getenv("FRONTEND_URL"))
 
 @app.post("/api/logout")
 def logout():

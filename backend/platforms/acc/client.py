@@ -196,14 +196,3 @@ class Client:
             logger.error(f"[Client] Get user ID failed with error: {e}")
             raise
         return response["user"]["id"]
-
-    def clear_tokens(self):
-        self.access_token = None
-        self.user_id = None
-        try:
-            if os.path.exists(self.token_file):
-                os.remove(self.token_file)
-        except Exception:
-            pass
-
-    
