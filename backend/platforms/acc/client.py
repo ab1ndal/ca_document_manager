@@ -11,6 +11,7 @@ import os
 #from urllib.parse import urlparse, parse_qs, urlencode
 import requests
 from urllib.parse import urlencode
+from backend import token_store
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,6 @@ class Client:
         #self.port = 9000
         self.redirect_uri = os.getenv("APS_REDIRECT_URI")
         self.project_id = os.getenv("ACC_PROJECT_ID")
-        self.token_file = os.getenv("APS_TOKEN_FILE", "aps_token.json")
         self.access_token = None
         self.user_id = None
         #self.project_id = project_id
@@ -67,20 +67,20 @@ class Client:
             path = "/" + path
         return f"{self.BASE_URL}{path}"
 
-    def _load_tokens(self) -> Optional[Dict[str, Any]]:
-        "Load tokens from file"
-        try:
-            #print("Loading tokens")
-            with open(self.token_file, "r") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            #print("Token File Not Found")
-            return None
+    def set_session(self, session_id: str):
+        self.session_id = session_id
 
-    def _save_tokens(self, tokens: Dict[str, Any]):
-        "Save tokens to file"
-        with open(self.token_file, "w") as f:
-            json.dump(tokens, f)
+    def load_tokens(self):
+        return token_store.get_tokens(self.session_id)
+
+    def save_tokens(self, tokens):
+        token_store.set_tokens(self.session_id, tokens)
+        self.access_token = tokens["access_token"]
+
+    def clear_tokens(self):
+        token_store.clear_tokens(self.session_id)
+        self.access_token = None
+        self.user_id = None
 
     #--------------------------------------------------
     #            OAUTH FLOW
@@ -99,7 +99,7 @@ class Client:
     def _refresh_tokens(self):
         "Refresh tokens"
         #print("Checking refresh tokens")
-        stored = self._load_tokens()
+        stored = self.load_tokens()
         if not stored or "refresh_token" not in stored:
             #print("No refresh token found")
             return False
@@ -116,7 +116,7 @@ class Client:
             #print("Refresh failed:", new_tokens.text)
             return False
         if new_tokens:
-            self._save_tokens(new_tokens.json())
+            self.save_tokens(new_tokens.json())
             self.access_token = new_tokens.json()["access_token"]
             return True
         return False
@@ -134,7 +134,7 @@ class Client:
         r = requests.post(url, data=data)
         r.raise_for_status()
         tokens = r.json()
-        self._save_tokens(tokens)
+        self.save_tokens(tokens)
         self.access_token = tokens["access_token"]
 
     def login(self) -> Dict[str, str]:

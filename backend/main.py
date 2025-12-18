@@ -3,6 +3,7 @@ from bottle import Bottle, run, request, response
 #from backend.cors import enable_cors
 import re
 import os
+import uuid
 
 app = Bottle()
 api = API()
@@ -19,45 +20,51 @@ def options_handler(path):
 
 @app.post("/api/login")
 def login():
-    try:
-        response.content_type = "application/json"
-        print("Entering Login Route")
-        result = api.login()
-        return result
-    except Exception as e:
-        response.status = 500
-        return {"error": str(e)}
+    session_id = request.get_cookie("session_id")
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        response.set_cookie(
+            "session_id",
+            session_id,
+            httponly=True,
+            secure=True,
+            samesite="None"
+        )
+
+    api.client.set_session(session_id)
+    return api.login()
 
 @app.get("/callback")
 def callback():
-    code = request.query.get("code")
-
-    if not code:
+    session_id = request.get_cookie("session_id")
+    if not session_id:
         response.status = 400
-        return "Missing authorization code"
+        return "Missing session"
 
-    try:
-        api.client.handle_callback(code)
-        return "Authentication complete. You can close this tab."
-    except Exception as e:
-        response.status = 500
-        return f"Authentication failed: {str(e)}"
+    api.client.set_session(session_id)
+    api.client.handle_callback(request.query.code)
+
+    return "Authentication complete. You can close this tab."
 
 @app.post("/api/logout")
 def logout():
-    try:
+    session_id = request.get_cookie("session_id")
+    if session_id:
+        api.client.set_session(session_id)
         api.client.clear_tokens()
-        return {"status": "logged_out"}
-    except Exception as e:
-        response.status = 500
-        return {"error": str(e)}
+
+    response.delete_cookie("session_id")
+    return {"status": "logged_out"}
 
 @app.get("/api/auth/status")
 def auth_status():
-    response.content_type = "application/json"
-    tokens = api.client._load_tokens()
-    logged_in = bool(tokens and tokens.get("access_token"))
-    return {"logged_in": logged_in}
+    session_id = request.get_cookie("session_id")
+    if not session_id:
+        return {"logged_in": False}
+
+    api.client.set_session(session_id)
+    tokens = api.client.load_tokens()
+    return {"logged_in": bool(tokens)}
 
 @app.post("/api/rfis")
 def get_rfis():
