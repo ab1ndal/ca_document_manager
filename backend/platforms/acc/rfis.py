@@ -3,17 +3,37 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 from backend.platforms.acc.client import Client
 import logging
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+PST = ZoneInfo("America/Los_Angeles")
+UTC = ZoneInfo("UTC")
+
+def to_utc_iso(dt_str: str) -> str:
+    # Parse PST local time (no timezone in string)
+    dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M")
+    # Attach PST timezone
+    dt = dt.replace(tzinfo=PST)
+    # Convert to UTC
+    dt_utc = dt.astimezone(UTC)
+    # Format as UTC ISO string
+    return dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 logger = logging.getLogger(__name__)
 
 def create_date_range(start: Optional[datetime]=None, end: Optional[datetime]=None)->Optional[str]:
     if not start and not end:
         return None
-    start_date, end_date = "", ""
+
     if start:
-        start_date = f"{start}:00Z"
+        start_date = to_utc_iso(start)
+    else:
+        start_date = ""
     if end:
-        end_date = f"{end}:00Z"
+        end_date = to_utc_iso(end)
+    else:
+        end_date = ""
+
     if start and end:
         return f"{start_date}..{end_date}"
     elif start:
@@ -27,7 +47,8 @@ def search_rfis(
     search_text: Optional[str] = None,
     created_after: Optional[datetime]=None,
     updated_after: Optional[datetime]=None,
-    limit: int = 100
+    limit: int = 100,
+    fields: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
 
     collected: List[Dict[str, Any]] = []
@@ -48,6 +69,9 @@ def search_rfis(
     if updated_after:
         filters["updatedAt"] = create_date_range(start=updated_after)
 
+    #print(fields)
+
+    """
     fields_list = [
         "customIdentifier",
         "title",
@@ -56,8 +80,9 @@ def search_rfis(
         "createdAt",
         "dueDate",
         "attachmentsCount"
-    ]
+    ]"""
 
+    # TODO: Include fields
     body = {
         "limit": limit,
         "offset": offset,
@@ -67,7 +92,7 @@ def search_rfis(
             "order": "ASC"
         }],
         "filter": filters,
-        "fields": fields_list
+    #    "fields": fields
     }
 
     try:

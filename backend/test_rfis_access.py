@@ -139,6 +139,21 @@ def get_rfi_by_id(token, project_id, rfi_id):
         print(json.dumps(r.json(), indent=2))
         return r.json()
 
+def get_custom_attributes(token, project_id):
+    url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/attributes"
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+    r = requests.get(url, headers=headers)
+    print("Status:", r.status_code)
+    if not r.status_code == 200:
+        print(r.text[:200])
+        return
+    else:
+        print("\nParsed JSON:")
+        print(json.dumps(r.json(), indent=2))
+        return r.json()
+
 def find_rfi_by_custom_identifier(token, project_id, identifier):
     url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/search:rfis"
     headers = {
@@ -409,6 +424,9 @@ def main():
     #if result and result.get("results"):
     #    rfi_json = result["results"][0]
     #    download_rfi_attachments(access_token, PROJECT_ID, rfi_json)
+
+    # Step 7: List of custom attributes
+    get_custom_attributes(access_token, PROJECT_ID)
 
 
 if __name__ == "__main__":

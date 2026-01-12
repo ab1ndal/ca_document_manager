@@ -1,14 +1,9 @@
 # Source: ca_document_manager\platforms\acc\client.py
 import json
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import logging
 import os
-#import threading
-#import time
-#import webbrowser
-#from http.server import HTTPServer, BaseHTTPRequestHandler
-#from urllib.parse import urlparse, parse_qs, urlencode
 import requests
 from urllib.parse import urlencode
 from backend import token_store
@@ -17,25 +12,7 @@ logger = logging.getLogger(__name__)
 
 from dotenv import load_dotenv
 load_dotenv()
-"""
-class OAuthHandler(BaseHTTPRequestHandler):
-    code = None
 
-    def do_GET(self):
-        parsed = urlparse(self.path)
-        if parsed.path == "/callback":
-            query = parse_qs(parsed.query)
-            OAuthHandler.code = query.get("code", [None])[0]
-            self.send_response(200)
-            self.end_headers()
-            self.wfile.write(b"Auth complete. You can close this tab.")
-        else:
-            self.send_response(404)
-            self.end_headers()
-
-    def log_message(self, format, *args):
-        return
-"""
 @dataclass
 class Client:
     BASE_URL: str = "https://developer.api.autodesk.com"
@@ -44,19 +21,18 @@ class Client:
         "Initialize the ACC Client"
         self.client_id = os.getenv("APS_CLIENT_ID")
         self.client_secret = os.getenv("APS_CLIENT_SECRET")
-        #self.server = os.getenv("APS_SERVER", "localhost")
-        #self.port = 9000
         self.redirect_uri = os.getenv("APS_REDIRECT_URI")
         self.project_id = os.getenv("ACC_PROJECT_ID")
         self.access_token = None
         self.user_id = None
-        #self.project_id = project_id
+        self.session_id = None
         if not self.client_id or not self.client_secret:
             raise ValueError("APS_CLIENT_ID and APS_CLIENT_SECRET are required")
         if not self.project_id:
             raise ValueError("ACC_PROJECT_ID is required")
         if not self.redirect_uri:
             raise ValueError("APS_REDIRECT_URI is required")
+
 
     #--------------------------------------------
     #               UTILITY HELPER
@@ -198,3 +174,71 @@ class Client:
             logger.error(f"[Client] Get user ID failed with error: {e}")
             raise
         return response["user"]["id"]
+
+    def get_rfi_types(self) -> Optional[List[Dict[str, Any]]]:
+        path = f"construction/rfis/v3/projects/{self.project_id}/rfi-types"
+        try:
+            response = self.get(path=path)
+        except Exception as e:
+            logger.error(f"[Client] Get RFI types failed with error: {e}")
+            raise
+        return response
+
+    def get_rfi_attributes(self):
+        path = f"construction/rfis/v3/projects/{self.project_id}/attributes"
+        print("In the Get Attribute Pathway")
+        try:
+            res = self.get(path=path)
+            print("Response:", res)
+            return res
+        except Exception as e:
+            if "status code 403" not in str(e):
+                raise
+            logger.warning("RFI attributes endpoint blocked; falling back to search-based attributes.")
+            return self._get_rfi_attributes_via_search()
+
+    def _get_rfi_attributes_via_search(self, limit: int = 2):
+        body = {
+            "limit": limit,
+            "offset": 0,
+            "fields": ["customAttributes"],
+        }
+        try:
+            response = self.search_rfis(body=body)
+        except Exception as e:
+            logger.error(f"[Client] Search fallback for attributes failed: {e}")
+            raise
+        results = response.get("results", [])
+        return self._extract_custom_attributes(results)
+
+    def _extract_custom_attributes(self, results):
+        attributes = {}
+        for rfi in results:
+            raw = rfi.get("customAttributes") or rfi.get("customAttributeValues")
+            print(raw)
+            if isinstance(raw, list):
+                for item in raw:
+                    if isinstance(item, dict):
+                        attr_id = (
+                            item.get("id")
+                            or item.get("attributeId")
+                            or item.get("definitionId")
+                            or item.get("name")
+                            or item.get("displayName")
+                        )
+                        if not attr_id:
+                            continue
+                        attr_name = (
+                            item.get("name")
+                            or item.get("displayName")
+                            or item.get("label")
+                            or item.get("title")
+                            or attr_id
+                        )
+                        attributes[attr_id] = attr_name
+                    elif isinstance(item, str):
+                        attributes[item] = item
+            elif isinstance(raw, dict):
+                for key in raw.keys():
+                    attributes[key] = key
+        return [{"id": attr_id, "name": name} for attr_id, name in sorted(attributes.items(), key=lambda x: x[1])]

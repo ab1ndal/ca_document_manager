@@ -1,9 +1,10 @@
 from backend.api import API
 from bottle import Bottle, run, request, response, redirect
 #from backend.cors import enable_cors
-import re
+import json
 import os
 import uuid
+import re
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -18,6 +19,16 @@ def add_cors_headers():
         response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Origin, Content-Type, Accept, X-Session-Id"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+
+@app.error(500)
+def error500(error):
+    origin = request.headers.get("Origin")
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Origin, Content-Type, Accept, X-Session-Id"
+    return {"error": str(error.exception)}
 
 @app.route("/<path:path>", method=["OPTIONS"])
 def options_handler(path):
@@ -78,6 +89,46 @@ def get_rfis():
     items = api.get_rfis(filters)
     return {"items": items}
 
+@app.get("/api/rfis/attributes")
+def get_rfi_attributes():
+    session_id = request.headers.get("X-Session-Id")
+    if not session_id:
+        response.status = 401
+        return {"error": "Missing session"}
+
+    api.client.set_session(session_id)
+    attributes = api.get_rfi_attributes()
+    return {"attributes": attributes}
+
+@app.get("/api/config/fields")
+def get_field_config():
+    session_id = request.headers.get("X-Session-Id")
+    if not session_id:
+        return {"fields": []}
+
+    api.client.set_session(session_id)
+    try:
+        config = api.get_field_config()
+    except Exception as e:
+        logger.error(f"[get_field_config] Failed: {e}")
+        return {"fields": []}
+    return config
+
+@app.post("/api/config/fields")
+def save_field_config():
+    session_id = request.headers.get("X-Session-Id")
+    if not session_id:
+        response.status = 401
+        return {"error": "Missing session"}
+
+    api.client.set_session(session_id)
+    config = request.json or {}
+    try:
+        api.save_field_config(config)
+    except Exception as e:
+        logger.error(f"[save_field_config] Failed: {e}")
+        return {"status": "failed"}
+    return {"status": "saved"}
 
 if __name__ == "__main__":
     run(

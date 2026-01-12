@@ -4,7 +4,23 @@ import { AgGridReact } from 'ag-grid-react';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const RFITable = ({ data }) => {
+const RFITable = ({ data, fields }) => {
+
+  const enabledFields = fields.filter(f => f.enabled);
+  
+  // Generate columns dynamically based on enabled fields
+  const columns = enabledFields.map(field => ({
+    accessorKey: field.id,
+    header: field.label,
+    cell: ({ row }) => {
+      const value = row.original[field.id];
+      // Format value based on field type
+      if (field.id.includes('Date') || field.id.includes('At')) {
+        return value ? new Date(value).toLocaleDateString() : '-';
+      }
+      return value || '-';
+    }
+  }));
   
   // Row colors
   const getRowStyle = (params) => {

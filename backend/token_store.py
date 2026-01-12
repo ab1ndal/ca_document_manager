@@ -3,7 +3,23 @@ import time
 from backend.redis_client import redis_client
 
 SESSION_PREFIX = "session:"
+CONFIG_PREFIX = "config:"
 
+def _config_key(key: str) -> str:
+    return f"{CONFIG_PREFIX}{key}"
+
+def set_config(key: str, value: str, ttl: int | None = None):
+    if ttl:
+        redis_client.setex(_config_key(key), ttl, value)
+    else:
+        redis_client.set(_config_key(key), value)
+
+def get_config(key: str) -> str | None:
+    data = redis_client.get(_config_key(key))
+    return data.decode("utf-8") if data else None
+
+def clear_config(key: str):
+    redis_client.delete(_config_key(key))
 
 def _key(session_id: str) -> str:
     return f"{SESSION_PREFIX}{session_id}"

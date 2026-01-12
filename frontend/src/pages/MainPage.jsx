@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Settings } from "lucide-react";
 import FiltersPanel from "@/components/filters/FiltersPanel";
 import RFITable from "@/components/RFITable";
 import ExportButton from "@/components/ExportButton";
+import ConfigTab from "@/components/ConfigTab";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -17,6 +18,8 @@ export default function MainPage({
 }) {
   const [results, setResults] = useState([]);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [showConfig, setShowConfig] = useState(false);
+  const [tableFields, setTableFields] = useState([]);
   const [filters, setFilters] = useState({
     searchText: "",
     updatedAfter: "",
@@ -28,18 +31,40 @@ export default function MainPage({
   useEffect(() => {
     document.documentElement.classList.remove("dark");
     document.documentElement.style.backgroundColor = "#f7f9fc";
+    loadTableConfig();
     return () => {
       document.documentElement.style.backgroundColor = "";
     };
   }, []);
 
+  const loadTableConfig = async () => {
+    try{
+      const sessionId = localStorage.getItem("session_id");
+      const res = await fetch(`${API_BASE}/api/config/fields`, {
+        headers: { "X-Session-Id": sessionId }
+      });
+      if (res.ok) {
+        const config = await res.json();
+        setTableFields(config.fields || []);
+      }
+    } catch (err) {
+      console.error("Failed to load table config:", err);
+    }
+  };
+
+  const handleConfigSave = (fields) => {
+    setTableFields(fields);
+    setShowConfig(false);
+  };
+
   const handleSearch = async () => {
     try {
       const sessionId = localStorage.getItem("session_id");
+      const fieldIds = tableFields.filter(f => f.enabled).map(f => f.isCustom ? f.customAttributeId : f.id);
       const res = await fetch(`${API_BASE}/api/rfis`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Session-Id": sessionId },
-        body: JSON.stringify(filters)
+        body: JSON.stringify({ ...filters, fields: fieldIds })
       });
 
       if (res.status === 401 || res.status === 403) {
@@ -59,6 +84,30 @@ export default function MainPage({
     }
   };
 
+  if (showConfig) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-sky-50 text-slate-900">
+        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6">
+          <header className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-6 py-4 shadow-sm backdrop-blur">
+            <div className="flex items-center gap-3 leading-tight">
+              <h1 className="text-xl font-semibold tracking-tight">Table Configuration</h1>
+            </div>
+            <Button variant="outline" onClick={() => setShowConfig(false)}>
+              Back to Main
+            </Button>
+          </header>
+          <div className="h-[calc(100vh-9rem)] relative">
+            <ConfigTab 
+              onSave={handleConfigSave}
+              onCancel={() => setShowConfig(false)}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-sky-50 text-slate-900">
       <div className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-6">
@@ -70,6 +119,10 @@ export default function MainPage({
           </div>
 
           <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setShowConfig(true)}>
+              <Settings className="mr-2 h-4 w-4" />
+              Configure Table
+            </Button>
             <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm shadow-inner">
               <span className={`h-2.5 w-2.5 rounded-full ${isLoggedIn ? "bg-emerald-500" : "bg-slate-300"}`} />
               <span className="font-medium">{isLoggedIn ? "Connected" : "Not connected"}</span>
@@ -147,7 +200,7 @@ export default function MainPage({
                  {/* 4. Render the Table if we have data, otherwise show placeholder */}
                  {results.length > 0 ? (
                     <div className="h-full w-full">
-                       <RFITable data={results} />
+                       <RFITable data={results} fields={tableFields} />
                     </div>
                  ) : (
                     <div className="m-6 flex h-[calc(100%-3rem)] flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center text-sm text-slate-500 justify-center items-center">
