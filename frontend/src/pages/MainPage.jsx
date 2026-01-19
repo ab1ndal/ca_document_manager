@@ -24,7 +24,7 @@ export default function MainPage({
     searchText: "",
     updatedAfter: "",
     assignee: "NYA Team",
-    limit: 100
+    limit: 200
   });
 
   // Force light mode + soft background

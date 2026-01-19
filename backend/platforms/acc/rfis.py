@@ -47,7 +47,7 @@ def search_rfis(
     search_text: Optional[str] = None,
     created_after: Optional[datetime]=None,
     updated_after: Optional[datetime]=None,
-    limit: int = 100,
+    limit: int = 200,
     fields: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
 
