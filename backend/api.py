@@ -41,7 +41,7 @@ class API:
     def get_rfis(self, filters):
         search_text = filters.get("searchText", " ")
         activity_after = filters.get("updatedAfter", None)
-        limit = filters.get("limit", 100)
+        limit = filters.get("limit", 200)
         fields = filters.get("fields", None)
         
         #print("Inside API call")
