@@ -176,6 +176,8 @@ const RFITable = ({ data, fields }) => {
           rowData={data}
           columnDefs={colDefs}
           defaultColDef={defaultColDef}
+          enableCellTextSelection={true}
+          ensureDomOrder={true}
           pagination={true}
           paginationPageSize={20}
           theme={themeQuartz}
