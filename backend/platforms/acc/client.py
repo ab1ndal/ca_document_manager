@@ -179,10 +179,25 @@ class Client:
         path = f"construction/rfis/v3/projects/{self.project_id}/rfi-types"
         try:
             response = self.get(path=path)
+            id_name_pair = {
+                item["id"]: item["name"] 
+                for item in response.get("results", [])
+                if item.get("id") and item.get("name")
+            }
+
         except Exception as e:
             logger.error(f"[Client] Get RFI types failed with error: {e}")
             raise
-        return response
+        return id_name_pair
+
+    def get_custom_attr_names(self) -> Optional[List[Dict[str, Any]]]:
+        path = f"construction/rfis/v3/projects/{self.project_id}/attributes"
+        try:
+            response = self.get(path=path)
+            return response
+        except Exception as e:
+            logger.error(f"[Client] Get custom attribute names failed with error: {e}")
+            raise
 
     def get_rfi_attributes(self):
         path = f"construction/rfis/v3/projects/{self.project_id}/attributes"

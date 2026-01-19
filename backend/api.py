@@ -51,6 +51,10 @@ class API:
         print("Getting RFI types")
         rfi_types = self.client.get_rfi_types()
         print("RFI types:", rfi_types)
+        
+        print("Getting custom attribute names")
+        custom_attr_names = self.client.get_custom_attr_names()
+        print("Custom attribute names:", custom_attr_names)
 
         if activity_after:
             # 1. Search by createdAt >= PT time (converted to UTC)
