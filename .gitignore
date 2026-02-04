@@ -1,6 +1,8 @@
 # node_modules
 node_modules
 aps_token.json
+outputs/
+test-output.coffee
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

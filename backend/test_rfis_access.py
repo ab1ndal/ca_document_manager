@@ -8,13 +8,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import requests
 from dotenv import load_dotenv
+from pathlib import Path
+from datetime import datetime
+import base64
 
 # Load environment variables from .env file
 load_dotenv()
 
 CLIENT_ID = os.getenv("APS_CLIENT_ID")
 CLIENT_SECRET = os.getenv("APS_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("APS_REDIRECT_URI", "http://127.0.0.1:9000/callback")
+REDIRECT_URI = os.getenv("APS_REDIRECT_URI", "http://localhost:8000/callback")
 PROJECT_ID = os.getenv("ACC_PROJECT_ID")
 TOKEN_FILE = os.getenv("APS_TOKEN_FILE", "aps_token.json")
 
@@ -22,6 +25,30 @@ TOKEN_FILE = os.getenv("APS_TOKEN_FILE", "aps_token.json")
 # ---------------------------
 # Local server to capture callback
 # ---------------------------
+
+def print_token_scopes(access_token: str):
+    try:
+        parts = access_token.split(".")
+        if len(parts) < 2:
+            print("Token is not JWT formatted")
+            return
+        payload_b64 = parts[1] + "==="
+        payload_json = base64.urlsafe_b64decode(payload_b64.encode("utf-8"))
+        payload = json.loads(payload_json)
+        print("Token scopes:", payload.get("scope") or payload.get("scp"))
+    except Exception as e:
+        print("Could not decode token payload:", e)
+
+def save_pretty_json(data: dict, prefix: str, folder: str = "outputs"):
+    Path(folder).mkdir(parents=True, exist_ok=True)
+
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = Path(folder) / f"{prefix}_{ts}.json"
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"\nSaved JSON to: {file_path.resolve()}")
 
 def load_tokens():
     try:
@@ -68,7 +95,7 @@ class OAuthHandler(BaseHTTPRequestHandler):
 
 
 def start_server():
-    server = HTTPServer(("127.0.0.1", 9000), OAuthHandler)
+    server = HTTPServer(("localhost", 8000), OAuthHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     return server
 
@@ -102,8 +129,8 @@ def get_rfi_user_me(token, project_id):
     print("\n[RFI User Me] raw response:", r.status_code)
     print(r.text[:500])
     if r.status_code == 200:
-        print("\nParsed JSON:")
-        print(json.dumps(r.json(), indent=2))
+        data = r.json()
+        save_pretty_json(data, "rfis_user_me")
 
 
 def search_rfis(token, project_id, limit=5):
@@ -121,8 +148,8 @@ def search_rfis(token, project_id, limit=5):
     print("\n[Search RFIs] raw response:", r.status_code)
     print(r.text[:500])
     if r.status_code == 200:
-        print("\nParsed JSON:")
-        print(json.dumps(r.json(), indent=2))
+        data = r.json()
+        save_pretty_json(data, "rfis_search")
 
 def get_rfi_by_id(token, project_id, rfi_id):
     url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/rfis/{rfi_id}"
@@ -135,24 +162,33 @@ def get_rfi_by_id(token, project_id, rfi_id):
         print(r.text[:200])
         return
     else:
-        print("\nParsed JSON:")
-        print(json.dumps(r.json(), indent=2))
+        data = r.json()
+        save_pretty_json(data, "rfis_by_id")
         return r.json()
 
 def get_custom_attributes(token, project_id):
     url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/attributes"
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json"
     }
     r = requests.get(url, headers=headers)
-    print("Status:", r.status_code)
-    if not r.status_code == 200:
-        print(r.text[:200])
-        return
-    else:
-        print("\nParsed JSON:")
-        print(json.dumps(r.json(), indent=2))
-        return r.json()
+    print("[Get RFI Attributes] Status:", r.status_code)
+    # Helpful debug headers
+    req_id = r.headers.get("x-request-id") or r.headers.get("x-ads-request-id")
+    if req_id:
+        print("Request ID:", req_id)
+
+    print("WWW-Authenticate:", r.headers.get("www-authenticate"))
+    print("Content-Type:", r.headers.get("content-type"))
+
+    if r.status_code != 200:
+        print("Body:", r.text[:500])
+        return None
+
+    data = r.json()
+    save_pretty_json(data, "rfis_attributes")
+    return data
 
 def find_rfi_by_custom_identifier(token, project_id, identifier):
     url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/search:rfis"
@@ -162,7 +198,7 @@ def find_rfi_by_custom_identifier(token, project_id, identifier):
     }
     body = {
         "search": identifier,
-        "limit": 50
+        "limit": 200
     }
 
     r = requests.post(url, headers=headers, json=body)
@@ -171,9 +207,9 @@ def find_rfi_by_custom_identifier(token, project_id, identifier):
         print(r.text[:200])
         return
     if r.status_code == 200:
-        print("\nParsed JSON:")
-        print(json.dumps(r.json(), indent=2))
-    return r.json()
+        data = r.json()
+        #save_pretty_json(data, "rfis_by_custom_id")
+    return data["results"][0]["id"]
 
 def get_rfis_with_attachments(project_id, token, limit=100):
     url = f"https://developer.api.autodesk.com/construction/rfis/v3/projects/{project_id}/search:rfis"
@@ -348,7 +384,7 @@ def main():
         print("Set ACC_PROJECT_ID in your .env file")
         return
 
-    scopes = ["data:read"]  # minimal for RFIs read
+    scopes = ["data:read", "account:read"]  # minimal for RFIs read
     auth_url = "https://developer.api.autodesk.com/authentication/v2/authorize"
     params = {
         "response_type": "code",
@@ -398,19 +434,23 @@ def main():
         print("\nGot access token.")
 
     # Step 1: Check if user is recognized in RFIs API
-    get_rfi_user_me(access_token, PROJECT_ID)
+    #get_rfi_user_me(access_token, PROJECT_ID)
+
+    # Print token scopes
+    #print_token_scopes(access_token)
 
     # Step 2: Try searching RFIs in the project
     #print(f"\nUsing project ID: {PROJECT_ID}")
     #search_rfis(access_token, PROJECT_ID)
 
     # Step 3: Try getting a specific RFI
-    rfi_id = "9aa5b442-f532-4e1c-98c1-34b4c83ef246"
-    get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
+    #rfi_id = "9aa5b442-f532-4e1c-98c1-34b4c83ef246"
+    #get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
 
     # Step 4: Try finding an RFI by custom identifier
-    #identifier = "00127"
-    #find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+    identifier = "Test RFI"
+    rfi_id = find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+    get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
 
     # Step 5: Try getting RFIs with attachments
     #rfis = get_rfis_with_attachments(PROJECT_ID, access_token)
@@ -426,7 +466,7 @@ def main():
     #    download_rfi_attachments(access_token, PROJECT_ID, rfi_json)
 
     # Step 7: List of custom attributes
-    get_custom_attributes(access_token, PROJECT_ID)
+    #get_custom_attributes(access_token, PROJECT_ID)
 
 
 if __name__ == "__main__":

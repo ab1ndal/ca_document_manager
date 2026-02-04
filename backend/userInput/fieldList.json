@@ -1,0 +1,77 @@
+{
+  "module": "RFI",
+  "groups": [
+        { "key": "customIdentifier", "label": "RFI Number", "type": "string", "category": "core" },
+        { "key": "title", "label": "Title", "type": "string", "category": "core" },
+        { "key": "question", "label": "Question", "type": "string", "category": "core" },
+        { "key": "status", "label": "Status", "type": "string", "category": "core" },
+        { "key": "priority", "label": "Priority", "type": "string", "category": "core" },
+        { "key": "id", "label": "RFI ID", "type": "string", "category": "core" },
+        { "key": "createdAt", "label": "Created At", "type": "datetime", "category": "dates" },
+        { "key": "updatedAt", "label": "Updated At", "type": "datetime", "category": "dates" },
+        { "key": "dueDate", "label": "Due Date", "type": "datetime", "category": "dates" },
+        { "key": "answeredAt", "label": "Answered At", "type": "datetime", "category": "dates" },
+        { "key": "answeredAtV2", "label": "Answered At (V2)", "type": "datetime", "category": "dates" },
+        { "key": "respondedAt", "label": "Responded At", "type": "datetime", "category": "dates" },
+        { "key": "closedAt", "label": "Closed At", "type": "datetime", "category": "dates" },
+        { "key": "createdBy", "label": "Created By", "type": "userId", "category": "people" },
+        { "key": "updatedBy", "label": "Updated By", "type": "userId", "category": "people" },
+        { "key": "closedBy", "label": "Closed By", "type": "userId", "category": "people" },
+        { "key": "respondedBy", "label": "Responded By", "type": "userId", "category": "people" },
+        { "key": "answeredBy", "label": "Answered By", "type": "userId", "category": "people" },
+        { "key": "answeredByV2", "label": "Answered By (V2)", "type": "userId", "category": "people" },
+        { "key": "rfiTypeId", "label": "RFI Type", "type": "string", "category": "workflow" },
+        { "key": "previousStatus", "label": "Previous Status", "type": "string", "category": "workflow" },
+        { "key": "attachmentsCount", "label": "Attachments Count", "type": "int", "category": "attachments" },
+        { "key": "virtualFolderUrn", "label": "Virtual Folder URN", "type": "string", "category": "attachments" },
+        { "key": "responses", "label": "Responses", "type": "array[object]", "category": "responses" },
+        { "key": "draftResponses", "label": "Draft Responses", "type": "array[object]", "category": "responses" },
+        { "key": "eb5a579a-543a-4241-ac84-c12be28a7d67", "label": "CCD #, NMA/ACD #", "type": "string", "category": "customAttributes"},
+        { "key": "187a59c9-0c02-4722-a779-14e01fce52b0", "label": "CCD Status", "type": "select", "category": "customAttributes",
+          "options": [
+            {"key": "b6670d8d-dd68-40b1-94bd-435989cc6df5", "label": "ACD Approved"}, 
+            {"key": "d3e01455-7f02-49de-922f-68129ce1dcec", "label": "ACD Required"},
+            {"key": "1caa0e71-0152-467a-8122-3cbb48552585", "label": "ACD Submitted"},
+            {"key": "1cfea5bf-5549-4ab4-8964-332f53cf3c25", "label": "Actionable - Future CCD Required"},
+            {"key": "675bb2f1-c2e3-4373-a32b-426973c8d49f", "label": "Multiple CCDs Required"},
+            {"key": "8d931173-2503-4f2b-b0ee-bef8ed829780", "label": "NMA Issued"},
+            {"key": "41343baa-4845-4f00-8b45-daa185774f5f", "label": "NMA Required"},
+            {"key": "bae46532-8231-48c4-adab-a681504a0956", "label": "No CCD Required"}
+          ]
+        },
+        { "key": "ba7a05f1-6973-45f6-afbd-62d30cf79979", "label": "Increment", "type": "multi-select", "category": "customAttributes",
+          "options": [
+            {"key": "75373abc-2edc-41af-8b17-6ef43d7b369e", "label": "INC 1"}, 
+            {"key": "09960468-ac96-44c6-9c2c-faf6d2667743", "label": "INC 2"},
+            {"key": "33eff84b-60ec-4e1b-95a2-4082f0e602ad", "label": "INC 3"},
+            {"key": "143268a8-1f76-46d1-b928-73384835027a", "label": "INC 4"},
+            {"key": "e9ac5338-52a9-47f2-86ee-dae7ddaad8f6", "label": "INC 5"},
+            {"key": "3fb844c0-d535-4885-a746-b76f666d6da4", "label": "INC 6"}
+          ]
+        },
+        { "key": "7f2e3e37-8f64-47ef-b757-e53abab77e09", "label": "AHJ", "type": "select", "category": "customAttributes",
+          "options": [
+            {"key": "6350cde8-c08f-42fd-8139-841fcbd1cda7", "label": "Both"}, 
+            {"key": "6ee92166-7558-44f4-a479-65029ffe5e89", "label": "BPS"},
+            {"key": "54cdd170-a5ee-45bd-957d-926f7792567e", "label": "HCAI/OSHPD"}
+          ]
+        },
+        { "key": "281a18b1-0f0a-441b-b5a8-cdb9059c7639", "label": "Vendor's RFI Number", "type": "string", "category": "customAttributes" },
+        { "key": "20860698-83f4-4cd7-9268-12a26b829820", "label": "Trade Partner", "type": "multi-select", "category": "customAttributes",
+          "options": [
+            {"key": "7313266b-05f2-4121-90d6-580ce30093c5", "label": "BEI"}, 
+            {"key": "c1a5f3ab-0761-4786-8272-2ac04adc5693", "label": "CDC"},
+            {"key": "dec83d83-0013-4963-af00-1026edc7d2a3", "label": "HBW"},
+            {"key": "2c2a09b7-b28b-473b-9b9d-8b5730bcd6e0", "label": "Lawson"},
+            {"key": "1f228959-e94d-41e8-8bba-3e89208c6778", "label": "Malcolm"},
+            {"key": "63cd26e2-9362-43c0-a673-5bfc67d71dce", "label": "M&H"},
+            {"key": "52120b90-7dbd-4dc2-b49e-fb673bc0879e", "label": "PSG"},
+            {"key": "8331eca6-49d1-41a9-b594-fd5c776ec602", "label": "REI"},
+            {"key": "8af270ff-380b-44d9-ad25-f54c57a9f9c8", "label": "Schuff"},
+            {"key": "4c321408-3266-4044-a2fd-5f7236297750", "label": "SI"},
+            {"key": "54caed9a-6e55-40fe-848a-47a59c04f3b0", "label": "Southwest Steel"},
+            {"key": "3cdac403-6f2e-4aaa-a55b-8f818f210252", "label": "Webcor Concrete"}
+          ]
+        }
+      ]
+}
