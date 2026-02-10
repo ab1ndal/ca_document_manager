@@ -51,10 +51,6 @@ class API:
         print("Getting RFI types")
         rfi_types = self.client.get_rfi_types()
         print("RFI types:", rfi_types)
-        
-        #print("Getting custom attribute names")
-        #custom_attr_names = self.client.get_custom_attr_names()
-        #print("Custom attribute names:", custom_attr_names)
 
         #TODO: Print a specific RFI
         #print("Printing a specific RFI")
@@ -101,7 +97,6 @@ class API:
     def get_rfi_attributes(self):
         try:
             attributes = self.client.get_rfi_attributes()
-            print(attributes)
             return attributes
         except Exception as e:
             logger.error(f"[get_rfi_attributes] Failed: {e}")

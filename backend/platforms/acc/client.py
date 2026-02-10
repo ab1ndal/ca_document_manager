@@ -7,6 +7,7 @@ import os
 import requests
 from urllib.parse import urlencode
 from backend import token_store
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -190,70 +191,13 @@ class Client:
             raise
         return id_name_pair
 
-    def get_custom_attr_names(self) -> Optional[List[Dict[str, Any]]]:
-        path = f"construction/rfis/v3/projects/{self.project_id}/attributes"
-        try:
-            response = self.get(path=path)
-            return response
-        except Exception as e:
-            logger.error(f"[Client] Get custom attribute names failed with error: {e}")
-            raise
-
     def get_rfi_attributes(self):
-        path = f"construction/rfis/v3/projects/{self.project_id}/attributes"
-        print("In the Get Attribute Pathway")
-        try:
-            res = self.get(path=path)
-            print("Response:", res)
-            return res
-        except Exception as e:
-            if "status code 403" not in str(e):
-                raise
-            logger.warning("RFI attributes endpoint blocked; falling back to search-based attributes.")
-            return self._get_rfi_attributes_via_search()
-
-    def _get_rfi_attributes_via_search(self, limit: int = 2):
-        body = {
-            "limit": limit,
-            "offset": 0,
-            "fields": ["customAttributes"],
-        }
-        try:
-            response = self.search_rfis(body=body)
-        except Exception as e:
-            logger.error(f"[Client] Search fallback for attributes failed: {e}")
-            raise
-        results = response.get("results", [])
-        return self._extract_custom_attributes(results)
-
-    def _extract_custom_attributes(self, results):
-        attributes = {}
-        for rfi in results:
-            raw = rfi.get("customAttributes") or rfi.get("customAttributeValues")
-            print(raw)
-            if isinstance(raw, list):
-                for item in raw:
-                    if isinstance(item, dict):
-                        attr_id = (
-                            item.get("id")
-                            or item.get("attributeId")
-                            or item.get("definitionId")
-                            or item.get("name")
-                            or item.get("displayName")
-                        )
-                        if not attr_id:
-                            continue
-                        attr_name = (
-                            item.get("name")
-                            or item.get("displayName")
-                            or item.get("label")
-                            or item.get("title")
-                            or attr_id
-                        )
-                        attributes[attr_id] = attr_name
-                    elif isinstance(item, str):
-                        attributes[item] = item
-            elif isinstance(raw, dict):
-                for key in raw.keys():
-                    attributes[key] = key
-        return [{"id": attr_id, "name": name} for attr_id, name in sorted(attributes.items(), key=lambda x: x[1])]
+        """
+        Displays all RFI attributes as provided by user in fieldList.json. File is in parent directory under userInput folder.
+        """
+        # Read the fieldList.json file
+        fieldListPath = Path(__file__).resolve().parents[2] /"userInput"/ "fieldList.json"
+        with open(fieldListPath, "r") as f:
+            fieldList = json.load(f)
+        return fieldList["groups"]
+        
