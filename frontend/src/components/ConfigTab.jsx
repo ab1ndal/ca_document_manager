@@ -62,8 +62,6 @@ export default function ConfigTab({ onSave, onCancel }) {
 
   useEffect(() => {
     // Load config for selected increment
-    console.log("Selected increment:", selectedIncrement);
-    console.log("Configs:", configs);
     if (configs[selectedIncrement]) {
       setCurrentConfig(configs[selectedIncrement]);
     } else {
@@ -95,7 +93,6 @@ export default function ConfigTab({ onSave, onCancel }) {
 
       if (configRes.ok) {
         const savedConfigs = await configRes.json();
-        console.log("Saved configs:", savedConfigs);
         setConfigs(savedConfigs || {});
       }
     } catch (err) {

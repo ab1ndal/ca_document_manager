@@ -21,7 +21,6 @@ function App() {
       });
       if (res.ok) {
         const data = await res.json();
-        console.log(data)
         if (data.logged_in){
           setIsLoggedIn(true);
           return;
