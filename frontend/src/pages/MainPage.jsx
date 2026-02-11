@@ -20,11 +20,15 @@ export default function MainPage({
   const [showSidebar, setShowSidebar] = useState(true);
   const [showConfig, setShowConfig] = useState(false);
   const [tableFields, setTableFields] = useState([]);
+  const [allConfigs, setAllConfigs] = useState({});
+  const [incrementConfig, setIncrementConfig] = useState({});
+  const [selectedIncrement, setSelectedIncrement] = useState("Custom Search");
   const [filters, setFilters] = useState({
     searchText: "",
     updatedAfter: "",
     assignee: "NYA Team",
-    limit: 200
+    limit: 200,
+    increment: "Custom Search"
   });
 
   // Force light mode + soft background

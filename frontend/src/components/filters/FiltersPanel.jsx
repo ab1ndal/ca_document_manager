@@ -3,9 +3,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
+const INCREMENTS = ["INC 1", "INC 2", "INC 3", "INC 4", "INC 5", "INC 6", "Custom Search"];
+
 function FiltersPanel({ filters, setFilters, onApply }) {
   return (
     <div className="flex flex-col gap-5">
+      <div className="space-y-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Increment</p>
+        <Select
+          value={filters.increment ?? "Custom Search"}
+          onValueChange={(v) => setFilters((p) => ({ ...p, increment: v }))}
+        >
+          <SelectTrigger className="bg-white/90">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {INCREMENTS.map((inc) => (
+              <SelectItem key={inc} value={inc}>
+                {inc}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Search</p>
@@ -34,7 +54,7 @@ function FiltersPanel({ filters, setFilters, onApply }) {
       <div className="space-y-2">
         <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Assignee</p>
         <Select
-          value={filters.assignee}
+          value={filters.assignee ?? "NYA Team"}
           onValueChange={(v) => setFilters((p) => ({ ...p, assignee: v }))}
         >
           <SelectTrigger className="bg-white/90">
