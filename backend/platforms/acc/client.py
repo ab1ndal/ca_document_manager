@@ -186,6 +186,10 @@ class Client:
             raise
         return response["user"]["id"]
 
+    def get_rfi_by_id(self, rfi_id: str) -> dict:
+        path = f"construction/rfis/v3/projects/{self.project_id}/rfis/{rfi_id}"
+        return self.get(path=path)
+
     def get_rfi_types(self) -> Optional[List[Dict[str, Any]]]:
         path = f"construction/rfis/v3/projects/{self.project_id}/rfi-types"
         try:

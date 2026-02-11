@@ -1,5 +1,56 @@
 {
   "module": "RFI",
+  "custom_groups": {
+    "187a59c9-0c02-4722-a779-14e01fce52b0":{
+      "label": "CCD Status",
+      "options":{
+        "b6670d8d-dd68-40b1-94bd-435989cc6df5": "ACD Approved",
+        "d3e01455-7f02-49de-922f-68129ce1dcec": "ACD Required",
+        "1caa0e71-0152-467a-8122-3cbb48552585": "ACD Submitted",
+        "1cfea5bf-5549-4ab4-8964-332f53cf3c25": "Actionable - Future CCD Required",
+        "675bb2f1-c2e3-4373-a32b-426973c8d49f": "Multiple CCDs Required",
+        "8d931173-2503-4f2b-b0ee-bef8ed829780": "NMA Issued",
+        "41343baa-4845-4f00-8b45-daa185774f5f": "NMA Required",
+        "bae46532-8231-48c4-adab-a681504a0956": "No CCD Required"
+      }
+    },
+    "ba7a05f1-6973-45f6-afbd-62d30cf79979":{
+      "label": "Increment", 
+      "options": {
+        "75373abc-2edc-41af-8b17-6ef43d7b369e": "INC 1", 
+        "09960468-ac96-44c6-9c2c-faf6d2667743": "INC 2",
+        "33eff84b-60ec-4e1b-95a2-4082f0e602ad": "INC 3",
+        "143268a8-1f76-46d1-b928-73384835027a": "INC 4",
+        "e9ac5338-52a9-47f2-86ee-dae7ddaad8f6": "INC 5",
+        "3fb844c0-d535-4885-a746-b76f666d6da4": "INC 6"
+      }
+    },
+    "7f2e3e37-8f64-47ef-b757-e53abab77e09":{
+      "label": "AHJ", 
+      "options": {
+        "6350cde8-c08f-42fd-8139-841fcbd1cda7": "Both", 
+        "6ee92166-7558-44f4-a479-65029ffe5e89": "BPS",
+        "54cdd170-a5ee-45bd-957d-926f7792567e": "HCAI/OSHPD"
+      }
+    },
+    "20860698-83f4-4cd7-9268-12a26b829820":{
+      "label": "Trade Partner", 
+      "options": {
+        "7313266b-05f2-4121-90d6-580ce30093c5": "BEI", 
+        "c1a5f3ab-0761-4786-8272-2ac04adc5693": "CDC",
+        "dec83d83-0013-4963-af00-1026edc7d2a3": "HBW",
+        "2c2a09b7-b28b-473b-9b9d-8b5730bcd6e0": "Lawson",
+        "1f228959-e94d-41e8-8bba-3e89208c6778": "Malcolm",
+        "63cd26e2-9362-43c0-a673-5bfc67d71dce": "M&H",
+        "52120b90-7dbd-4dc2-b49e-fb673bc0879e": "PSG",
+        "8331eca6-49d1-41a9-b594-fd5c776ec602": "REI",
+        "8af270ff-380b-44d9-ad25-f54c57a9f9c8": "Schuff",
+        "4c321408-3266-4044-a2fd-5f7236297750": "SI",
+        "54caed9a-6e55-40fe-848a-47a59c04f3b0": "Southwest Steel",
+        "3cdac403-6f2e-4aaa-a55b-8f818f210252": "Webcor Concrete"
+      }
+    }
+  },
   "groups": [
         { "key": "customIdentifier", "label": "RFI Number", "type": "string", "category": "core" },
         { "key": "title", "label": "Title", "type": "string", "category": "core" },

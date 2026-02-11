@@ -47,21 +47,15 @@ def search_rfis(
     search_text: Optional[str] = None,
     created_after: Optional[datetime]=None,
     updated_after: Optional[datetime]=None,
-    limit: int = 200,
-    fields: Optional[List[str]] = None
-    ) -> List[Dict[str, Any]]:
-
-    collected: List[Dict[str, Any]] = []
+    limit: int = 200
+) -> List[str]:
     offset = 0
 
     # Create filters
     filters = {
-        "status": ["open", "openRev1", "openRev2"]
+        "status": ["open", "openRev1", "openRev2"],
+        "assignedTo": client.user_id
     }
-
-    #print("Fetching user id")
-    filters["assignedTo"] = client.user_id
-    #print("Obtained user id")
 
     if created_after:
         filters["createdAt"] = create_date_range(start=created_after)
@@ -78,25 +72,19 @@ def search_rfis(
             "field": "createdAt",
             "order": "ASC"
         }],
-        "filter": filters
+        "filter": filters,
+        "fields": ["id"]
     }
 
     try:
-        #print("Starting Search")
         response = client.search_rfis(body=body)
     except Exception as e:
         logger.error(f"[search_rfis] Search RFIs failed with error: {e}")
         raise
 
+    ids = []
+
     for r in response.get("results", []):
-        collected.append(r)
+        ids.append(r.get("id"))
 
-    print("Collected data:", collected)
-    cleaned_data = {}
-    for r in collected:
-        cleaned_data[r["customIdentifier"]] = {}
-        for field in fields:
-            cleaned_data[r["customIdentifier"]][field] = r.get(field)
-
-    print("Cleaned data:", cleaned_data)
-    return cleaned_data
+    return ids

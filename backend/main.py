@@ -5,6 +5,7 @@ import json
 import os
 import uuid
 import re
+from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -66,6 +67,26 @@ def auth_status():
     tokens = api.client.load_tokens()
     return {"logged_in": bool(tokens)}
 
+def get_custom_mapping():
+    field_list_path = Path(__file__).parent / "userInput" / "fieldList.json"
+    with open(field_list_path, "r") as f:
+        field_list = json.load(f)
+    return field_list["custom_groups"]
+
+
+def flatten_custom_attributes(rfi: dict) -> dict:
+    custom_attrs = rfi.pop("customAttributes", [])
+
+    for attr in custom_attrs:
+        attr_id = attr.get("id")
+        values = attr.get("values", [])
+        if attr_id and values:
+            if attr_id in get_custom_mapping():
+                rfi[attr_id] = get_custom_mapping()[attr_id]["options"][values[0]]
+            else:
+                rfi[attr_id] = values[0]
+    return rfi
+
 @app.post("/api/rfis")
 def get_rfis():
     session_id = request.headers.get("X-Session-Id") or "global"
@@ -73,7 +94,27 @@ def get_rfis():
 
     filters = request.json or {}
     items = api.get_rfis(filters)
-    return {"items": items}
+    desired_fields = filters.get("fields", None)
+
+    full = []
+    for rfi_id in items:
+        try:
+            full.append(flatten_custom_attributes(api.client.get_rfi_by_id(rfi_id)))
+        except Exception as e:
+            continue
+    def pick_fields(obj: dict, desired: list[str]) -> dict:
+        out = {}
+        for key in desired:
+            out[key] = obj.get(key)
+        return out
+    
+    print("Full RFIs:", full)
+    print("Desired fields:", desired_fields)
+    desired_fields = desired_fields or ["id", "customIdentifier", "title", "status"]
+    rows = [pick_fields(rfi, desired_fields) for rfi in full]
+    results = {r["customIdentifier"]: r for r in rows}
+    print("Results:", results)
+    return {"items": results}
 
 @app.get("/api/rfis/attributes")
 def get_rfi_attributes():

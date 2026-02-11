@@ -39,53 +39,46 @@ class API:
             raise
 
     def get_rfis(self, filters):
-        print("Filters:", filters)
         search_text = filters.get("searchText", " ")
         activity_after = filters.get("updatedAfter", None)
         limit = filters.get("limit", 200)
-        fields = filters.get("fields", None)
         
-        #print("Inside API call")
         if not self.client.user_id:
             self.client.user_id = [self.client.get_user_id()]
 
         if activity_after:
             # 1. Search by createdAt >= PT time (converted to UTC)
-            #print("Searching via creation date")
-            created_results = search_rfis(
+            created_ids = search_rfis(
                 self.client,
                 search_text=search_text,
                 created_after=activity_after,
                 updated_after=None,
-                limit=limit,
-                fields=fields
+                limit=limit
             )
 
             # 2. Search by updatedAt >= PT time (converted to UTC)
-            #print("Searching via Update date")
-            updated_results = search_rfis(
+            updated_ids = search_rfis(
                 self.client,
                 search_text=search_text,
                 created_after=None,
                 updated_after=activity_after,
-                limit=limit,
-                fields=fields
+                limit=limit
             )
-
             # Merge both by RFI ID
-            combined = created_results | updated_results
-            print("Combined:", combined)
-            return list(combined.values())
+            search_ids = list(set(created_ids) | set(updated_ids))
+            
+        else:
+            # No date provided → default search
+            search_ids = search_rfis(
+                self.client,
+                search_text=search_text,
+                created_after=None,
+                updated_after=None,
+                limit=limit
+            )
+        print("Search IDs:", search_ids)
+        return search_ids
 
-        # No date provided → default search
-        return search_rfis(
-            self.client,
-            search_text=search_text,
-            created_after=None,
-            updated_after=None,
-            limit=limit,
-            fields=fields
-        )
 
     def get_rfi_attributes(self):
         try:
