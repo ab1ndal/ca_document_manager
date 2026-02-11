@@ -108,13 +108,10 @@ def get_rfis():
             out[key] = obj.get(key)
         return out
     
-    print("Full RFIs:", full)
-    print("Desired fields:", desired_fields)
     desired_fields = desired_fields or ["id", "customIdentifier", "title", "status"]
     rows = [pick_fields(rfi, desired_fields) for rfi in full]
     results = {r["customIdentifier"]: r for r in rows}
-    print("Results:", results)
-    return {"items": results}
+    return {"items": rows}
 
 @app.get("/api/rfis/attributes")
 def get_rfi_attributes():

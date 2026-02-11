@@ -100,6 +100,8 @@ export default function MainPage({
           .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
           .map((f) => f.key);
 
+      console.log("=== SEARCH REQUEST ===");
+
       console.log("Field IDs:", fieldIds);
       const res = await fetch(`${API_BASE}/api/rfis`, {
         method: "POST",
@@ -119,6 +121,8 @@ export default function MainPage({
       const data = await res.json();
       console.log("Response data:", data);
       setResults(data.items || []);
+      console.log("=== SEARCH REQUEST END ===");
+      console.log("Results:", results);
     } catch (err) {
       console.error(err);
     }

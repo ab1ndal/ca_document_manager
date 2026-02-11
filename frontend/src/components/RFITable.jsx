@@ -8,15 +8,16 @@ const RFITable = ({ data, fields }) => {
 
   const enabledFields = fields.filter(f => f.enabled);
   console.log("Enabled fields in table:", enabledFields);
+  console.log("Data in table:", data);
   
   // Generate columns dynamically based on enabled fields
   const columns = enabledFields.map(field => ({
-    accessorKey: field.id,
+    accessorKey: field.key,
     header: field.label,
     cell: ({ row }) => {
-      const value = row.original[field.id];
+      const value = row.original[field.key];
       // Format value based on field type
-      if (field.id.includes('Date') || field.id.includes('At')) {
+      if (field.key.includes('Date') || field.key.includes('At')) {
         return value ? new Date(value).toLocaleDateString() : '-';
       }
       return value || '-';
