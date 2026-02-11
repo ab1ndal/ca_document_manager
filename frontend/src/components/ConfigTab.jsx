@@ -62,6 +62,8 @@ export default function ConfigTab({ onSave, onCancel }) {
 
   useEffect(() => {
     // Load config for selected increment
+    console.log("Selected increment:", selectedIncrement);
+    console.log("Configs:", configs);
     if (configs[selectedIncrement]) {
       setCurrentConfig(configs[selectedIncrement]);
     } else {
@@ -83,10 +85,7 @@ export default function ConfigTab({ onSave, onCancel }) {
       });
 
       const attrsData = await attrsRes.json();
-      console.log("Raw attributes response:", attrsData);
-      console.log("Type of attrsData:", typeof attrsData, "Is array:", Array.isArray(attrsData));
       const attributes = Array.isArray(attrsData) ? attrsData : (attrsData.attributes || []);
-      console.log("Processed attributes:", attributes);
       setAllAttributes(attributes);
       
       // Load all increment configs
@@ -96,7 +95,8 @@ export default function ConfigTab({ onSave, onCancel }) {
 
       if (configRes.ok) {
         const savedConfigs = await configRes.json();
-        setConfigs(savedConfigs.configs || {});
+        console.log("Saved configs:", savedConfigs);
+        setConfigs(savedConfigs || {});
       }
     } catch (err) {
       console.error("Failed to load configuration:", err);

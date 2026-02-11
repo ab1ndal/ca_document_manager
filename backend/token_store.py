@@ -16,7 +16,11 @@ def set_config(key: str, value: str, ttl: int | None = None):
 
 def get_config(key: str) -> str | None:
     data = redis_client.get(_config_key(key))
-    return data.decode("utf-8") if data else None
+    if not data:
+        return None
+    if isinstance(data, bytes):
+        return data.decode("utf-8")
+    return data
 
 def clear_config(key: str):
     redis_client.delete(_config_key(key))
@@ -45,6 +49,8 @@ def get_tokens(session_id: str) -> dict | None:
     data = redis_client.get(_key(session_id))
     if not data:
         return None
+    if isinstance(data, bytes):
+        data = data.decode("utf-8")
     return json.loads(data)
 
 

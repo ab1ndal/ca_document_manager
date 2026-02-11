@@ -102,6 +102,43 @@ class API:
             logger.error(f"[get_rfi_attributes] Failed: {e}")
             raise
 
+    def get_increment_configs(self):
+        """Get all increment configurations"""
+        try:
+            config_key = f"increments"
+            stored = token_store.get_config(config_key)
+            
+            if stored:
+                try:
+                    return json.loads(stored)
+                except json.JSONDecodeError:
+                    return {"configs": {}}
+            return {"configs": {}}
+        except Exception as e:
+            logger.error(f"[get_increment_configs] Failed: {e}")
+            return {"configs": {}}
+
+    def get_increment_config(self, increment):
+        """Get configuration for a specific increment"""
+        try:
+            all_configs = self.get_increment_configs()
+            print("Getting increment config:", all_configs)
+            return all_configs.get("configs", {}).get(increment, None)
+        except Exception as e:
+            logger.error(f"[get_increment_config] Failed: {e}")
+            return None
+
+    def save_increment_configs(self, configs):
+        """Save all increment configurations"""
+        try:
+            config_key = f"increments"
+            print("Saving increment configs:", configs)
+            token_store.set_config(config_key, json.dumps(configs))
+            return {"status": "success"}
+        except Exception as e:
+            logger.error(f"[save_increment_configs] Failed: {e}")
+            raise
+
     def get_field_config(self):
         try:
             config_key = f"config:fields:{self.client.session_id}"

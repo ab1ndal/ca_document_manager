@@ -130,6 +130,45 @@ def save_field_config():
         return {"status": "failed"}
     return {"status": "saved"}
 
+@app.get("/api/config/increments")
+def get_increment_configs():
+    """
+    Get all saved increment configurations
+    Returns: { "configs": { "INC 1": {...}, "INC 2": {...}, ... } }
+    """
+    session_id = request.headers.get("X-Session-Id")
+    if not session_id:
+        return {"fields": []}
+
+    api.client.set_session(session_id)
+    try:
+        configs = api.get_increment_configs()
+        return configs
+    except Exception as e:
+        logger.error(f"Failed to get increment configs: {e}")
+        return {"error": str(e)}, 500
+
+@app.post("/api/config/increments")
+def save_increment_configs():
+    """
+    Save all increment configurations
+    Body: { "configs": { "INC 1": { "searchTerm": "", "fields": [...] }, ... } }
+    """
+    session_id = request.headers.get("X-Session-Id")
+    if not session_id:
+        response.status = 401
+        return {"error": "Missing session"}
+
+    api.client.set_session(session_id)
+    body = request.json or {}
+    try:
+        configs = body.get("configs", {})
+        result = api.save_increment_configs(configs)
+        return result
+    except Exception as e:
+        logger.error(f"Failed to save increment configs: {e}")
+        return {"error": str(e)}, 500
+
 if __name__ == "__main__":
     run(
         app, 
