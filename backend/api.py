@@ -39,6 +39,7 @@ class API:
             raise
 
     def get_rfis(self, filters):
+        print("Filters:", filters)
         search_text = filters.get("searchText", " ")
         activity_after = filters.get("updatedAfter", None)
         limit = filters.get("limit", 200)
@@ -47,14 +48,6 @@ class API:
         #print("Inside API call")
         if not self.client.user_id:
             self.client.user_id = [self.client.get_user_id()]
-
-        print("Getting RFI types")
-        rfi_types = self.client.get_rfi_types()
-        print("RFI types:", rfi_types)
-
-        #TODO: Print a specific RFI
-        #print("Printing a specific RFI")
-        #self.client.get_rfi_by_id(rfi_id)
 
         if activity_after:
             # 1. Search by createdAt >= PT time (converted to UTC)
@@ -80,7 +73,7 @@ class API:
             )
 
             # Merge both by RFI ID
-            combined = {r["customIdentifier"]: r for r in (created_results + updated_results)}
+            combined = created_results | updated_results
             print("Combined:", combined)
             return list(combined.values())
 

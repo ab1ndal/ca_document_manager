@@ -38,9 +38,8 @@ def set_tokens(session_id: str, tokens: dict):
         "user_id": tokens.get("user_id"),
     }
 
-    redis_client.setex(
+    redis_client.set(
         _key(session_id),
-        expires_in,
         json.dumps(payload)
     )
 

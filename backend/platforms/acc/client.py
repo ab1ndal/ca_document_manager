@@ -63,7 +63,7 @@ class Client:
     #            OAUTH FLOW
     #--------------------------------------------------
     def build_auth_url(self, state: str) -> str:
-        scopes = ["data:read"]
+        scopes = ["data:read", "account:read", "offline_access"]
         auth_url = self._url("authentication/v2/authorize")
         params = {
             "response_type": "code",
@@ -73,6 +73,19 @@ class Client:
             "state": state
         }
         return auth_url + "?" + urlencode(params)
+
+    def _request_with_auto_refresh(self, method: str, path: str, *, params=None, json_body=None):
+        url = self._url(path)
+
+        r = requests.request(method, url, headers=self.headers, params=params, json=json_body)
+
+        # If access token expired, refresh once and retry once
+        if r.status_code == 401:
+            if self._refresh_tokens():
+                r = requests.request(method, url, headers=self.headers, params=params, json=json_body)
+
+        return r
+
 
     def login_with_state(self, session_id: str):
         if self._refresh_tokens():
@@ -93,7 +106,8 @@ class Client:
             "grant_type": "refresh_token",
             "client_id": self.client_id,
             "client_secret": self.client_secret,
-            "refresh_token": stored["refresh_token"]
+            "refresh_token": stored["refresh_token"],
+            "scope": " ".join(["data:read", "account:read", "offline_access"])
         }
         new_tokens = requests.post(url, data=body)
         new_tokens.raise_for_status()
@@ -101,8 +115,11 @@ class Client:
             #print("Refresh failed:", new_tokens.text)
             return False
         if new_tokens:
-            self.save_tokens(new_tokens.json())
-            self.access_token = new_tokens.json()["access_token"]
+            nt = new_tokens.json()
+            if not nt.get("refresh_token"):
+                nt["refresh_token"] = stored["refresh_token"]
+            self.save_tokens(nt)
+            self.access_token = nt["access_token"]
             return True
         return False
 
@@ -138,21 +155,14 @@ class Client:
 
     def get(self, path:str, params: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
         "Make a GET request to the given path"
-        url = self._url(path)
-        headers = self.headers
-        if params:
-            r = requests.get(url, headers=headers, params=params)
-        else:
-            r = requests.get(url, headers=headers)
-
+        r = self._request_with_auto_refresh("GET", path, params=params)
         if r.status_code != 200:
             logger.error(f"GET failed with status code {r.status_code}L {r.text}")
             raise Exception(f"GET failed with status code {r.status_code}")
-        
         return r.json()
 
     def post(self, path:str, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        r = requests.post(self._url(path), headers=self.headers, json=body)
+        r = self._request_with_auto_refresh("POST", path, json_body=body)
         if r.status_code != 200:
             logger.error(f"POST failed with status code {r.status_code}: {r.text}")
             raise Exception(f"POST failed with status code {r.status_code}")
@@ -200,4 +210,5 @@ class Client:
         with open(fieldListPath, "r") as f:
             fieldList = json.load(f)
         return fieldList["groups"]
+        
         

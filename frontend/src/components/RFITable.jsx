@@ -7,6 +7,7 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 const RFITable = ({ data, fields }) => {
 
   const enabledFields = fields.filter(f => f.enabled);
+  console.log("Enabled fields in table:", enabledFields);
   
   // Generate columns dynamically based on enabled fields
   const columns = enabledFields.map(field => ({

@@ -69,20 +69,7 @@ def search_rfis(
     if updated_after:
         filters["updatedAt"] = create_date_range(start=updated_after)
 
-    #print(fields)
 
-    """
-    fields_list = [
-        "customIdentifier",
-        "title",
-        "question",
-        "status",
-        "createdAt",
-        "dueDate",
-        "attachmentsCount"
-    ]"""
-
-    # TODO: Include fields
     body = {
         "limit": limit,
         "offset": offset,
@@ -91,8 +78,7 @@ def search_rfis(
             "field": "createdAt",
             "order": "ASC"
         }],
-        "filter": filters,
-    #    "fields": fields
+        "filter": filters
     }
 
     try:
@@ -104,4 +90,13 @@ def search_rfis(
 
     for r in response.get("results", []):
         collected.append(r)
-    return collected
+
+    print("Collected data:", collected)
+    cleaned_data = {}
+    for r in collected:
+        cleaned_data[r["customIdentifier"]] = {}
+        for field in fields:
+            cleaned_data[r["customIdentifier"]][field] = r.get(field)
+
+    print("Cleaned data:", cleaned_data)
+    return cleaned_data

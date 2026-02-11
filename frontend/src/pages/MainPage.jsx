@@ -9,6 +9,21 @@ import ConfigTab from "@/components/ConfigTab";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+const DEFAULT_INCREMENT = "Custom Search";
+
+const getDefaultIncrementConfig = () => ({
+  searchTerm: "",
+  fields: [
+    { key: "customIdentifier", label: "RFI Number", order: 1, enabled: true },
+    { key: "title", label: "Title", order: 2, enabled: true },
+    { key: "question", label: "Question", order: 3, enabled: true },
+    { key: "status", label: "Status", order: 4, enabled: true },
+    { key: "createdAt", label: "Created At", order: 5, enabled: true },
+    { key: "dueDate", label: "Due Date", order: 6, enabled: true }
+  ]
+});
+
+
 export default function MainPage({
   isLoggedIn,
   onLogin,
@@ -21,14 +36,13 @@ export default function MainPage({
   const [showConfig, setShowConfig] = useState(false);
   const [tableFields, setTableFields] = useState([]);
   const [allConfigs, setAllConfigs] = useState({});
-  const [incrementConfig, setIncrementConfig] = useState({});
-  const [selectedIncrement, setSelectedIncrement] = useState("Custom Search");
+  const [activeConfig, setActiveConfig] = useState(getDefaultIncrementConfig());
   const [filters, setFilters] = useState({
     searchText: "",
     updatedAfter: "",
     assignee: "NYA Team",
     limit: 200,
-    increment: "Custom Search"
+    increment: DEFAULT_INCREMENT
   });
 
   // Force light mode + soft background
@@ -43,28 +57,50 @@ export default function MainPage({
 
   const loadTableConfig = async () => {
     try{
+      // Set Session ID
       const sessionId = localStorage.getItem("session_id");
-      const res = await fetch(`${API_BASE}/api/config/fields`, {
+      // Get all configs
+      const configRes = await fetch(`${API_BASE}/api/config/increments`, {
         headers: { "X-Session-Id": sessionId }
       });
-      if (res.ok) {
-        const config = await res.json();
-        setTableFields(config.fields || []);
-      }
+      if (!configRes.ok) throw new Error("Backend API call failed");
+      const data = await configRes.json();
+      setAllConfigs(data || {});
     } catch (err) {
       console.error("Failed to load table config:", err);
     }
   };
 
-  const handleConfigSave = (fields) => {
-    setTableFields(fields);
+  useEffect(() => {
+    const inc = filters.increment || DEFAULT_INCREMENT;
+    const cfg = allConfigs[inc] || getDefaultIncrementConfig();
+
+    setActiveConfig(cfg);
+
+    // Populate searchText initially from config searchTerm
+    setFilters((prev) => ({
+      ...prev,
+      increment: inc,
+      searchText: cfg.searchTerm || ""
+    }));
+    console.log("Active config:", cfg);
+    console.log("Filters:", filters);
+    setTableFields(cfg.fields || []);
+  }, [filters.increment, allConfigs]);
+
+  const handleConfigSave = () => {
     setShowConfig(false);
   };
 
   const handleSearch = async () => {
     try {
       const sessionId = localStorage.getItem("session_id");
-      const fieldIds = tableFields.filter(f => f.enabled).map(f => f.isCustom ? f.customAttributeId : f.id);
+      const fieldIds = (activeConfig.fields || [])
+          .filter((f) => f.enabled)
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map((f) => f.key);
+
+      console.log("Field IDs:", fieldIds);
       const res = await fetch(`${API_BASE}/api/rfis`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Session-Id": sessionId },
@@ -81,6 +117,7 @@ export default function MainPage({
       }
 
       const data = await res.json();
+      console.log("Response data:", data);
       setResults(data.items || []);
     } catch (err) {
       console.error(err);

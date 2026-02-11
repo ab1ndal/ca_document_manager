@@ -36,25 +36,19 @@ def options_handler(path):
 
 @app.get("/api/login")
 def login():
-    session_id = str(uuid.uuid4())
-
+    session_id = "global"
     # Create empty session in Redis
     api.client.set_session(session_id)
-
     result = api.login(session_id)
-
+    if result.get("status") == "ok":
+        return redirect(f"{os.getenv('FRONTEND_URL')}?session_id={session_id}")
     return redirect(result["auth_url"])
 
 @app.get("/callback")
 def callback():
-    session_id = request.query.state
-    if not session_id:
-        response.status = 400
-        return "Missing session"
-
+    session_id = "global"
     api.client.set_session(session_id)
     api.client.handle_callback(request.query.code)
-
     return redirect(f"{os.getenv('FRONTEND_URL')}?session_id={session_id}")
 
 @app.post("/api/logout")
@@ -67,22 +61,14 @@ def logout():
 
 @app.get("/api/auth/status")
 def auth_status():
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        return {"logged_in": False}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
     tokens = api.client.load_tokens()
-
     return {"logged_in": bool(tokens)}
 
 @app.post("/api/rfis")
 def get_rfis():
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        response.status = 401
-        return {"error": "Missing session"}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
 
     filters = request.json or {}
@@ -91,21 +77,14 @@ def get_rfis():
 
 @app.get("/api/rfis/attributes")
 def get_rfi_attributes():
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        response.status = 401
-        return {"error": "Missing session"}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
     attributes = api.get_rfi_attributes()
     return {"attributes": attributes}
 
 @app.get("/api/config/fields")
 def get_field_config():
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        return {"fields": []}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
     try:
         config = api.get_field_config()
@@ -116,11 +95,7 @@ def get_field_config():
 
 @app.post("/api/config/fields")
 def save_field_config():
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        response.status = 401
-        return {"error": "Missing session"}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
     config = request.json or {}
     try:
@@ -136,10 +111,7 @@ def get_increment_configs():
     Get all saved increment configurations
     Returns: { "configs": { "INC 1": {...}, "INC 2": {...}, ... } }
     """
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        return {"fields": []}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
     try:
         configs = api.get_increment_configs()
@@ -154,11 +126,7 @@ def save_increment_configs():
     Save all increment configurations
     Body: { "configs": { "INC 1": { "searchTerm": "", "fields": [...] }, ... } }
     """
-    session_id = request.headers.get("X-Session-Id")
-    if not session_id:
-        response.status = 401
-        return {"error": "Missing session"}
-
+    session_id = request.headers.get("X-Session-Id") or "global"
     api.client.set_session(session_id)
     body = request.json or {}
     try:
