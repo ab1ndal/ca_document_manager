@@ -78,7 +78,7 @@
         { "key": "responses", "label": "Responses", "type": "array[object]", "category": "responses" },
         { "key": "draftResponses", "label": "Draft Responses", "type": "array[object]", "category": "responses" },
         { "key": "eb5a579a-543a-4241-ac84-c12be28a7d67", "label": "CCD #, NMA/ACD #", "type": "string", "category": "customAttributes"},
-        { "key": "187a59c9-0c02-4722-a779-14e01fce52b0", "label": "CCD Status", "type": "select", "category": "customAttributes",
+        { "key": "187a59c9-0c02-4722-a779-14e01fce52b0", "label": "CCD Status", "type": "string", "category": "customAttributes",
           "options": [
             {"key": "b6670d8d-dd68-40b1-94bd-435989cc6df5", "label": "ACD Approved"}, 
             {"key": "d3e01455-7f02-49de-922f-68129ce1dcec", "label": "ACD Required"},
@@ -90,7 +90,7 @@
             {"key": "bae46532-8231-48c4-adab-a681504a0956", "label": "No CCD Required"}
           ]
         },
-        { "key": "ba7a05f1-6973-45f6-afbd-62d30cf79979", "label": "Increment", "type": "multi-select", "category": "customAttributes",
+        { "key": "ba7a05f1-6973-45f6-afbd-62d30cf79979", "label": "Increment", "type": "string", "category": "customAttributes",
           "options": [
             {"key": "75373abc-2edc-41af-8b17-6ef43d7b369e", "label": "INC 1"}, 
             {"key": "09960468-ac96-44c6-9c2c-faf6d2667743", "label": "INC 2"},
@@ -100,7 +100,7 @@
             {"key": "3fb844c0-d535-4885-a746-b76f666d6da4", "label": "INC 6"}
           ]
         },
-        { "key": "7f2e3e37-8f64-47ef-b757-e53abab77e09", "label": "AHJ", "type": "select", "category": "customAttributes",
+        { "key": "7f2e3e37-8f64-47ef-b757-e53abab77e09", "label": "AHJ", "type": "string", "category": "customAttributes",
           "options": [
             {"key": "6350cde8-c08f-42fd-8139-841fcbd1cda7", "label": "Both"}, 
             {"key": "6ee92166-7558-44f4-a479-65029ffe5e89", "label": "BPS"},
@@ -108,7 +108,7 @@
           ]
         },
         { "key": "281a18b1-0f0a-441b-b5a8-cdb9059c7639", "label": "Vendor's RFI Number", "type": "string", "category": "customAttributes" },
-        { "key": "20860698-83f4-4cd7-9268-12a26b829820", "label": "Trade Partner", "type": "multi-select", "category": "customAttributes",
+        { "key": "20860698-83f4-4cd7-9268-12a26b829820", "label": "Trade Partner", "type": "string", "category": "customAttributes",
           "options": [
             {"key": "7313266b-05f2-4121-90d6-580ce30093c5", "label": "BEI"}, 
             {"key": "c1a5f3ab-0761-4786-8272-2ac04adc5693", "label": "CDC"},

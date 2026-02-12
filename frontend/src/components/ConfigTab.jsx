@@ -28,12 +28,12 @@ import {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const INCREMENTS = ["INC 1", "INC 2", "INC 3", "INC 4", "INC 5", "INC 6", "Custom Search"];
 const DEFAULT_FIELDS = [
-  { key: "customIdentifier", label: "RFI Number", order: 1, enabled: true },
-  { key: "title", label: "Title", order: 2, enabled: true },
-  { key: "question", label: "Question", order: 3, enabled: true },
-  { key: "status", label: "Status", order: 4, enabled: true },
-  { key: "createdAt", label: "Created At", order: 5, enabled: true },
-  { key: "dueDate", label: "Due Date", order: 6, enabled: true }
+  { key: "customIdentifier", label: "RFI Number", order: 1, enabled: true, type: "string" },
+  { key: "title", label: "Title", order: 2, enabled: true, type: "string" },
+  { key: "question", label: "Question", order: 3, enabled: true, type: "string" },
+  { key: "status", label: "Status", order: 4, enabled: true, type: "string" },
+  { key: "createdAt", label: "Created At", order: 5, enabled: true, type: "datetime" },
+  { key: "dueDate", label: "Due Date", order: 6, enabled: true, type: "datetime" }
 ];
 
 export default function ConfigTab({ onSave, onCancel }) {
@@ -124,7 +124,8 @@ export default function ConfigTab({ onSave, onCancel }) {
       key: attribute.key,
       label: attribute.label,
       enabled: true,
-      order: maxOrder + 1
+      order: maxOrder + 1,
+      type: attribute.type
     };
     
     setCurrentConfig(prev => ({
