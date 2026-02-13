@@ -31,6 +31,7 @@ export default function MainPage({
   loginInProgress,
   onAuthFailure
 }) {
+  const [gridApi, setGridApi] = useState(null);
   const [results, setResults] = useState([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showConfig, setShowConfig] = useState(false);
@@ -44,6 +45,21 @@ export default function MainPage({
     limit: 200,
     increment: DEFAULT_INCREMENT
   });
+
+  const userMap = {
+      SZ9TN643R2CC: "NYA Team",
+      P39CRYCKS2TG: "Lisa Mosconi (Side Plate)",
+      PE72SPAEJZXFD3Y4: "Jennifer Hernandez (Graywolf Construction)",
+      AAG2AFWZRCRTKCZB: "Vanessa Duran (HBW)",
+      D8724UHAJKJGEA8F: "Eddie Yu (HBW)",
+      "4KTQNYETFNLU": "Mario Ulloa (Schuff Steel)",
+      "6MM25VMBPCSXXKJF": "Brandon Marble",
+      "FQ7GLS46P9FP": "Daniel Avendano",
+      AXN2J883RVJNJG7Q: "Marvin Garliepp",
+      "9LV9RKMPLA27": "Sarah Wayland (HBW)",
+      "ZEFRLJTNSD4U": "Nahush Montadka",
+      "WSF2QNFAP6BDM75Y":"Tommy Thompson"
+    };
 
   // Force light mode + soft background
   useEffect(() => {
@@ -236,7 +252,7 @@ export default function MainPage({
                   <Button variant="outline" onClick={handleSearch} className="shadow-sm">
                     Refresh
                   </Button>
-                  <ExportButton data={results} />
+                  <ExportButton data={results} fields={tableFields} gridApi={gridApi} userMap={userMap} />
                 </div>
               </CardHeader>
 
@@ -244,7 +260,7 @@ export default function MainPage({
                  {/* 4. Render the Table if we have data, otherwise show placeholder */}
                  {results.length > 0 ? (
                     <div className="h-full w-full">
-                       <RFITable data={results} fields={tableFields} />
+                       <RFITable data={results} fields={tableFields} userMap={userMap} onGridReadyApi={setGridApi} />
                     </div>
                  ) : (
                     <div className="m-6 flex h-[calc(100%-3rem)] flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center text-sm text-slate-500 justify-center items-center">

@@ -1,24 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-const RFITable = ({ data, fields }) => {
-  const userMap = {
-  SZ9TN643R2CC: "NYA Team",
-  P39CRYCKS2TG: "Lisa Mosconi (Side Plate)",
-  PE72SPAEJZXFD3Y4: "Jennifer Hernandez (Graywolf Construction)",
-  AAG2AFWZRCRTKCZB: "Vanessa Duran (HBW)",
-  D8724UHAJKJGEA8F: "Eddie Yu (HBW)",
-  "4KTQNYETFNLU": "Mario Ulloa (Schuff Steel)",
-  "6MM25VMBPCSXXKJF": "Brandon Marble",
-  "FQ7GLS46P9FP": "Daniel Avendano",
-  AXN2J883RVJNJG7Q: "Marvin Garliepp",
-  "9LV9RKMPLA27": "Sarah Wayland (HBW)",
-  "ZEFRLJTNSD4U": "Nahush Montadka",
-  "WSF2QNFAP6BDM75Y":"Tommy Thompson"
-};
+const RFITable = ({ data, fields, userMap, onGridReadyApi }) => {
+
+  const handleGridReady = (params) => {
+    onGridReadyApi?.(params.api);
+  };
 
   const enabledFields = useMemo(() => {
   if (!Array.isArray(fields)) return [];
@@ -53,9 +43,7 @@ const RFITable = ({ data, fields }) => {
       if (Number.isNaN(d.getTime())) return String(value);
       return d.toLocaleDateString();
     }
-    //TODO: THink about how to handle array{object} values
-    //TODO: Think about how to handle userID values
-
+    
     if (t === 'userid') return userMap[value] || `ID: ${value}`;
     if (t === 'number' || t === 'int') return Number(value);
     if (t === 'boolean') return value ? 'Yes' : 'No';
@@ -65,7 +53,7 @@ const RFITable = ({ data, fields }) => {
   const ResponsesCell = (props) => {
     const { value, context } = props;
 
-    const [expanded, setExpanded] = React.useState(false);
+    const [expanded, setExpanded] = useState(false);
 
     if (!Array.isArray(value) || value.length === 0) return <span>-</span>;
 
@@ -243,6 +231,7 @@ const RFITable = ({ data, fields }) => {
           theme={themeQuartz}
           rowSelection={rowSelection}
           getRowStyle={getRowStyle}
+          onGridReady={handleGridReady}
         />
       </div>
     </div>
