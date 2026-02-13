@@ -35,6 +35,7 @@ export default function MainPage({
   const [results, setResults] = useState([]);
   const [showSidebar, setShowSidebar] = useState(true);
   const [showConfig, setShowConfig] = useState(false);
+  const [loadingResults, setLoadingResults] = useState(false);
   const [tableFields, setTableFields] = useState([]);
   const [allConfigs, setAllConfigs] = useState({});
   const [activeConfig, setActiveConfig] = useState(getDefaultIncrementConfig());
@@ -110,6 +111,7 @@ export default function MainPage({
 
   const handleSearch = async () => {
     try {
+      setLoadingResults(true);
       const sessionId = localStorage.getItem("session_id");
       const fieldIds = (activeConfig.fields || [])
           .filter((f) => f.enabled)
@@ -118,7 +120,6 @@ export default function MainPage({
 
       console.log("=== SEARCH REQUEST ===");
 
-      console.log("Field IDs:", fieldIds);
       const res = await fetch(`${API_BASE}/api/rfis`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Session-Id": sessionId },
@@ -135,12 +136,11 @@ export default function MainPage({
       }
 
       const data = await res.json();
-      console.log("Response data:", data);
       setResults(data.items || []);
-      console.log("=== SEARCH REQUEST END ===");
-      console.log("Results:", results);
+      setLoadingResults(false);
     } catch (err) {
       console.error(err);
+      setLoadingResults(false);
     }
   };
 
@@ -230,7 +230,8 @@ export default function MainPage({
                   <FiltersPanel
                     filters={filters}
                     setFilters={setFilters}
-                    onApply={handleSearch}
+                    search={handleSearch}
+                    loadingResults={loadingResults}
                   />
                 </div>
               </div>

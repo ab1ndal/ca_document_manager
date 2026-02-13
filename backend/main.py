@@ -108,7 +108,7 @@ def get_rfis():
             out[key] = obj.get(key)
         return out
     
-    desired_fields = desired_fields or ["id", "customIdentifier", "title", "status"]
+    desired_fields = list(set(desired_fields + ["id", "customIdentifier", "title", "status"]))
     rows = [pick_fields(rfi, desired_fields) for rfi in full]
     results = {r["customIdentifier"]: r for r in rows}
     return {"items": rows}
@@ -130,6 +130,18 @@ def get_field_config():
         logger.error(f"[get_field_config] Failed: {e}")
         return {"fields": []}
     return config
+
+@app.post("/api/acc/signed-download")
+def signed_download():
+    session_id = request.headers.get("X-Session-Id") or "global"
+    api.client.set_session(session_id)
+
+    body = request.json or {}
+    storage_urn = (body.get("storageUrn") or "").strip()
+    # TODO: implement signed download
+    print(storage_urn)
+    return {"status": "ok"}
+
 
 @app.post("/api/config/fields")
 def save_field_config():

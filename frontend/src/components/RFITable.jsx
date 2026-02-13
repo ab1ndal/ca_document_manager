@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { AllCommunityModule, ModuleRegistry, themeQuartz } from 'ag-grid-community';
 import { AgGridReact } from 'ag-grid-react';
+import { Button } from "@/components/ui/button";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const RFITable = ({ data, fields, userMap, onGridReadyApi }) => {
 
@@ -49,6 +52,55 @@ const RFITable = ({ data, fields, userMap, onGridReadyApi }) => {
     if (t === 'boolean') return value ? 'Yes' : 'No';
     return String(value);
   }
+
+  const DownloadCell = (props) => {
+    const { value } = props;
+    const [loading, setLoading] = useState(false);
+
+    if (!value) return <span>-</span>;
+
+    const handleDownload = async () => {
+      try {
+        setLoading(true);
+        const sessionId = localStorage.getItem("session_id");
+
+        // Backend should return { url: "https://signed..." }
+        const res = await fetch(`${API_BASE}/api/acc/signed-download`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Session-Id": sessionId,
+          },
+          body: JSON.stringify({
+            storageUrn: value,
+            // optional: displayName if you have it in row data
+          }),
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data?.url) {
+          window.open(data.url, "_blank", "noopener,noreferrer");
+        }
+      } finally {
+        setLoading(false);
+      }
+  };
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={handleDownload}
+      disabled={loading}
+    >
+      {loading ? "Preparing..." : "Download"}
+    </Button>
+  );
+};
+
 
   const ResponsesCell = (props) => {
     const { value, context } = props;
@@ -143,6 +195,14 @@ const RFITable = ({ data, fields, userMap, onGridReadyApi }) => {
         col.valueGetter = (p) => p.data?.[key]; // ensures renderer gets the array
         col.flex = 3;
         col.minWidth = 500;
+        return col;
+      }
+
+      if (key === "virtualFolderUrn") {
+        col.cellRenderer = DownloadCell;
+        col.valueGetter = (p) => p.data?.[key];
+        col.minWidth = 160;
+        col.flex = 0;
         return col;
       }
 

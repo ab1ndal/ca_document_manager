@@ -5,7 +5,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 
 const INCREMENTS = ["INC 1", "INC 2", "INC 3", "INC 4", "INC 5", "INC 6", "Custom Search"];
 
-function FiltersPanel({ filters, setFilters, onApply }) {
+function FiltersPanel({ filters, setFilters, search, loadingResults }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="space-y-2">
@@ -67,8 +67,8 @@ function FiltersPanel({ filters, setFilters, onApply }) {
         </Select>
       </div>
 
-      <Button className="w-full shadow-sm" onClick={onApply}>
-        Apply Filters
+      <Button className="w-full shadow-sm" onClick={search} disabled={loadingResults}>
+        {loadingResults ? "Searching..." : "Search RFIs"}
       </Button>
     </div>
   );

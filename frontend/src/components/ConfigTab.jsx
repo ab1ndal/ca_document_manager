@@ -28,13 +28,16 @@ import {
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const INCREMENTS = ["INC 1", "INC 2", "INC 3", "INC 4", "INC 5", "INC 6", "Custom Search"];
 const DEFAULT_FIELDS = [
-  { key: "customIdentifier", label: "RFI Number", order: 1, enabled: true, type: "string" },
+  { key: "customIdentifier", label: "RFI#", order: 1, enabled: true, type: "string" },
   { key: "title", label: "Title", order: 2, enabled: true, type: "string" },
   { key: "question", label: "Question", order: 3, enabled: true, type: "string" },
-  { key: "status", label: "Status", order: 4, enabled: true, type: "string" },
-  { key: "createdAt", label: "Created At", order: 5, enabled: true, type: "datetime" },
-  { key: "dueDate", label: "Due Date", order: 6, enabled: true, type: "datetime" }
+  { key: "createdAt", label: "Created At", order: 4, enabled: true, type: "datetime" },
+  { key: "dueDate", label: "Due (per ACC)", order: 5, enabled: true, type: "datetime" },
+  { key: "status", label: "Status", order: 6, enabled: true, type: "string" }
 ];
+
+const REQUIRED_KEYS = new Set(["customIdentifier", "title", "question", "createdAt", "dueDate"]);
+
 
 export default function ConfigTab({ onSave, onCancel }) {
   const [selectedIncrement, setSelectedIncrement] = useState("Custom Search");
@@ -135,6 +138,8 @@ export default function ConfigTab({ onSave, onCancel }) {
   };
 
   const handleRemoveField = (fieldKey) => {
+    if (REQUIRED_KEYS.has(fieldKey)) return;
+    
     setCurrentConfig(prev => ({
       ...prev,
       fields: prev.fields.filter(f => f.key !== fieldKey)
@@ -338,8 +343,13 @@ export default function ConfigTab({ onSave, onCancel }) {
                   <Button
                     variant="ghost"
                     size="sm"
+                    disabled={REQUIRED_KEYS.has(field.key)}
                     onClick={() => handleRemoveField(field.key)}
-                    className="opacity-0 group-hover:opacity-100 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                    className={`opacity-0 group-hover:opacity-100 
+                      ${REQUIRED_KEYS.has(field.key) 
+                        ? "cursor-not-allowed text-slate-400 hover:bg-transparent hover:text-slate-400" 
+                        : "text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                      }`}
                   >
                     Remove
                   </Button>
