@@ -6,7 +6,18 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 const RFITable = ({ data, fields }) => {
   const userMap = {
-  SZ9TN643R2CC: "NYA Team"
+  SZ9TN643R2CC: "NYA Team",
+  P39CRYCKS2TG: "Lisa Mosconi (Side Plate)",
+  PE72SPAEJZXFD3Y4: "Jennifer Hernandez (Graywolf Construction)",
+  AAG2AFWZRCRTKCZB: "Vanessa Duran (HBW)",
+  D8724UHAJKJGEA8F: "Eddie Yu (HBW)",
+  "4KTQNYETFNLU": "Mario Ulloa (Schuff Steel)",
+  "6MM25VMBPCSXXKJF": "Brandon Marble",
+  "FQ7GLS46P9FP": "Daniel Avendano",
+  AXN2J883RVJNJG7Q: "Marvin Garliepp",
+  "9LV9RKMPLA27": "Sarah Wayland (HBW)",
+  "ZEFRLJTNSD4U": "Nahush Montadka",
+  "WSF2QNFAP6BDM75Y":"Tommy Thompson"
 };
 
   const enabledFields = useMemo(() => {
@@ -45,7 +56,7 @@ const RFITable = ({ data, fields }) => {
     //TODO: THink about how to handle array{object} values
     //TODO: Think about how to handle userID values
 
-    if (t === 'userid') return `ID: ${value}`;
+    if (t === 'userid') return userMap[value] || `ID: ${value}`;
     if (t === 'number' || t === 'int') return Number(value);
     if (t === 'boolean') return value ? 'Yes' : 'No';
     return String(value);
@@ -129,13 +140,21 @@ const RFITable = ({ data, fields }) => {
         cellStyle: { textAlign: "left" }
       };
 
+      if (key === "question") {
+        col.flex = 3;
+        col.minWidth = 500;
+      }
+
+      if (key === "title") {
+        col.flex = 2;
+        col.minWidth = 300;
+      }
+
       if (t === "array[object]") {
         col.cellRenderer = ResponsesCell;
         col.valueGetter = (p) => p.data?.[key]; // ensures renderer gets the array
         col.flex = 3;
         col.minWidth = 500;
-        col.sortable = false; // optional
-        col.filter = false;   // optional
         return col;
       }
 

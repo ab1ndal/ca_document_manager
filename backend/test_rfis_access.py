@@ -132,6 +132,18 @@ def get_rfi_user_me(token, project_id):
         data = r.json()
         save_pretty_json(data, "rfis_user_me")
 
+def get_all_users(token, project_id):
+    """Check if the current user is recognized in the RFIs system"""
+    print("Auth token:", token)
+    url = f"https://developer.api.autodesk.com/construction/admin/v1/projects/{project_id}/users"
+    headers = {"Authorization": f"Bearer {token}"}
+    r = requests.get(url, headers=headers)
+    print("\n[RFI User Me] raw response:", r.status_code)
+    print(r.text[:500])
+    if r.status_code == 200:
+        data = r.json()
+        save_pretty_json(data, "all_users")
+
 
 def search_rfis(token, project_id, limit=5):
     """Search RFIs via POST"""
@@ -434,7 +446,8 @@ def main():
         print("\nGot access token.")
 
     # Step 1: Check if user is recognized in RFIs API
-    #get_rfi_user_me(access_token, PROJECT_ID)
+    get_rfi_user_me(access_token, PROJECT_ID)
+    get_all_users(access_token, PROJECT_ID)
 
     # Print token scopes
     #print_token_scopes(access_token)
@@ -448,9 +461,9 @@ def main():
     #get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
 
     # Step 4: Try finding an RFI by custom identifier
-    identifier = "Test RFI"
-    rfi_id = find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
-    get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
+    #identifier = "Test RFI"
+    #rfi_id = find_rfi_by_custom_identifier(access_token, PROJECT_ID, identifier)
+    #get_rfi_by_id(access_token, PROJECT_ID, rfi_id)
 
     # Step 5: Try getting RFIs with attachments
     #rfis = get_rfis_with_attachments(PROJECT_ID, access_token)
