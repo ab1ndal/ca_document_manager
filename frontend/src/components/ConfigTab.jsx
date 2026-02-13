@@ -384,13 +384,15 @@ export default function ConfigTab({ onSave, onCancel }) {
                   </CollapsibleTrigger>
                   <CollapsibleContent className="mt-2 space-y-1">
                     {attrs.map((attr) => (
-                      <button
+                      <Button
                         key={attr.key}
+                        type="button"
+                        variant="outline"
                         onClick={() => handleAddField(attr)}
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-left text-sm text-slate-700 transition-all hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                        className="w-full justify-start text-left"
                       >
                         <div className="font-medium">{attr.label}</div>
-                      </button>
+                      </Button>
                     ))}
                   </CollapsibleContent>
                 </Collapsible>
@@ -413,7 +415,10 @@ export default function ConfigTab({ onSave, onCancel }) {
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={handleSave} className="gap-2 bg-blue-600 hover:bg-blue-700">
+          <Button 
+            variant="default"
+            onClick={handleSave} 
+            className="gap-2">
             <Save className="h-4 w-4" />
             Save Configuration
           </Button>
