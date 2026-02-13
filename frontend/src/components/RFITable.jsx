@@ -5,106 +5,145 @@ import { AgGridReact } from 'ag-grid-react';
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const RFITable = ({ data, fields }) => {
+  const userMap = {
+  SZ9TN643R2CC: "NYA Team"
+};
 
-  const enabledFields = fields.filter(f => f.enabled);
-  console.log(enabledFields);
-
-  const columns = enabledFields.map(field => ({
-    accessorKey: field.key,
-    header: field.label,
-    cell: ({ row }) => {
-      const value = row.original[field.key];
-      // Format value based on field type
-      if (field.key.includes('Date') || field.includes('At')) {
-        return value ? new Date(value).toLocaleDateString() : '-';
-      }
-      return value || '-';
-    }
-  }));
+  const enabledFields = useMemo(() => {
+  if (!Array.isArray(fields)) return [];
+  return fields
+    .filter((f) => f?.enabled)
+    .slice()
+    .sort((a, b) => Number(a?.order ?? 0) - Number(b?.order ?? 0));
+}, [fields]);
   
   // Row colors
   const getRowStyle = (params) => {
     const status = (params.data.status || "").toLowerCase();
-    if (['open'].includes(status)){
+    if (!status) return null;
+    if (status == "open"){
         return {background:'#ecfdf5'}
     }
-    if (['openrev1', 'openrev2'].includes(status)){
+    if (status === 'openrev1' || status === 'openrev2'){
         return {background: '#fffbeb'}
     }
+    return null;
   }
 
-  const [colDefs] = useState([
-    { 
-        field: "customIdentifier", 
-        headerName: "RFI#", 
-        width: 80, 
-        filter: true, 
-        pinned: 'left',
-        cellClass: "font-bold text-slate-700" 
-    },
-    { 
-        field: "title", 
-        headerName: "Title", 
-        flex: 2, 
-        minWidth: 300, // Fixed typo (was minwidth)
-        filter: true,
-        cellStyle : {textAlign: 'left'}
-        // Removed textAlign: center (defaults to Left)
-    },
-    { 
-        field: "question", 
-        headerName: "Question", 
-        flex: 3, 
-        minWidth: 500, // Fixed typo (was minwidth)
-        filter: true,
-        cellStyle : {textAlign: 'left'} 
-        // Removed textAlign: center (defaults to Left)
-    },
-    { 
-        field: "createdAt", 
-        headerName: "Created", 
-        width: 110, 
-        valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString() : '-' 
-    },
-    { 
-        field: "dueDate", 
-        headerName: "Due (per ACC)", 
-        width: 140, 
-        cellStyle: params => {
-            if (!params.value) return null;
-            const isOverdue = new Date(params.value) < new Date();
-            return isOverdue ? { color: '#ef4444', fontWeight: '600' } : null;
-        }, 
-        valueFormatter: (p) => p.value ? new Date(p.value).toLocaleDateString() : '-' 
-    },
-    { 
-        field: "attachmentsCount", 
-        headerName: "Attachments", 
-        width: 120, 
-        cellStyle: { textAlign: 'center' } 
-    },
-    { 
-      headerName: "Latest Response", 
-      flex: 3,
-      minWidth: 500, 
-      valueGetter: (params) => {
-        const res = params.data.responses;
-        if (res && res.length > 0) {
-            return res[0].text; 
-        }
-        return "";
-      },
-      cellStyle : {textAlign: 'left'},
-      // Removed textAlign: center (defaults to Left)
-    },
-    { 
-      field: "status", 
-      headerName: "Status", 
-      width: 150,
-      valueFormatter: (p) => p.value,
-      cellClass: "font-medium uppercase text-xs tracking-tight"
+  const formatValue = (value, field) => {
+    if (value === undefined || value === null || value === '') {
+      return '-';
     }
-  ]);
+
+    const t = String(field?.type || 'string').toLowerCase();
+
+    if (t === 'date' || t === 'datetime') {
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return d.toLocaleDateString();
+    }
+    //TODO: THink about how to handle array{object} values
+    //TODO: Think about how to handle userID values
+
+    if (t === 'userid') return `ID: ${value}`;
+    if (t === 'number' || t === 'int') return Number(value);
+    if (t === 'boolean') return value ? 'Yes' : 'No';
+    return String(value);
+  }
+
+  const ResponsesCell = (props) => {
+    const { value, context } = props;
+
+    const [expanded, setExpanded] = React.useState(false);
+
+    if (!Array.isArray(value) || value.length === 0) return <span>-</span>;
+
+    const toTime = (v) => {
+      const d = new Date(v);
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+    };
+
+    const bestTime = (obj) => Math.max(toTime(obj?.updatedAt), toTime(obj?.createdAt));
+
+    const sorted = [...value].sort((a, b) => bestTime(b) - bestTime(a));
+
+    const maxShown = expanded ? sorted.length : 2;
+    const shown = sorted.slice(0, maxShown);
+
+    const formatLine = (item) => {
+      const timeRaw = item.updatedAt || item.createdAt;
+      const time = timeRaw ? new Date(timeRaw).toLocaleDateString() : '';
+      const createdBy = item.createdBy || '';
+      const name = userMap[createdBy] || createdBy;
+      const status = item.status || '';
+      const text = item.text || '';
+
+      return `${time ? `[${time}] ` : ''}${status ? `(${status}) ` : ''}${name ? `${name}: ` : ''}\n${text}`.trim();
+    };
+
+    return (
+      <div style={{ whiteSpace: "pre-wrap", lineHeight: "1.4" }}>
+        {shown.map((item, idx) => (
+          <div key={idx} style={{ marginBottom: 8 }}>
+            {formatLine(item)}
+          </div>
+        ))}
+
+        {sorted.length > 2 && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            style={{
+              fontSize: 12,
+              color: "#2563eb",
+              textDecoration: "underline",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+              cursor: "pointer"
+            }}
+          >
+            {expanded ? "Show less" : `Show ${sorted.length - 2} more`}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+
+  const colDefs = useMemo(() => {
+    return enabledFields.map((field) => {
+      const key = field.key;
+      const t = String(field?.type || "string").toLowerCase();
+
+      const col = {
+        field: key,
+        headerName: field.label ?? key,
+        filter: true,
+        sortable: true,
+        resizable: true,
+        wrapText: true,
+        autoHeight: true,
+        flex: 1,
+        minWidth: 140,
+        cellStyle: { textAlign: "left" }
+      };
+
+      if (t === "array[object]") {
+        col.cellRenderer = ResponsesCell;
+        col.valueGetter = (p) => p.data?.[key]; // ensures renderer gets the array
+        col.flex = 3;
+        col.minWidth = 500;
+        col.sortable = false; // optional
+        col.filter = false;   // optional
+        return col;
+      }
+
+      col.valueFormatter = (p) => formatValue(p.value, field);
+      return col;
+    });
+  }, [enabledFields]);
+
 
   const rowSelection = useMemo(() => { 
     return { mode: 'singleRow' };
@@ -144,6 +183,8 @@ const RFITable = ({ data, fields }) => {
       </div>
     );
   }
+
+  
 
 
   return (

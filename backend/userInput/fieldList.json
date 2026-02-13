@@ -52,7 +52,7 @@
     }
   },
   "groups": [
-        { "key": "customIdentifier", "label": "RFI Number", "type": "string", "category": "core" },
+        { "key": "customIdentifier", "label": "RFI#", "type": "string", "category": "core" },
         { "key": "title", "label": "Title", "type": "string", "category": "core" },
         { "key": "question", "label": "Question", "type": "string", "category": "core" },
         { "key": "status", "label": "Status", "type": "string", "category": "core" },
@@ -60,7 +60,7 @@
         { "key": "id", "label": "RFI ID", "type": "string", "category": "core" },
         { "key": "createdAt", "label": "Created At", "type": "datetime", "category": "dates" },
         { "key": "updatedAt", "label": "Updated At", "type": "datetime", "category": "dates" },
-        { "key": "dueDate", "label": "Due Date", "type": "datetime", "category": "dates" },
+        { "key": "dueDate", "label": "Due (per ACC)", "type": "datetime", "category": "dates" },
         { "key": "answeredAt", "label": "Answered At", "type": "datetime", "category": "dates" },
         { "key": "answeredAtV2", "label": "Answered At (V2)", "type": "datetime", "category": "dates" },
         { "key": "respondedAt", "label": "Responded At", "type": "datetime", "category": "dates" },
