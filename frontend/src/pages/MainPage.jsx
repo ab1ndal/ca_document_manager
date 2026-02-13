@@ -241,7 +241,17 @@ export default function MainPage({
           </aside>
 
           {/* RESULTS */}
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 relative">
+            {loadingResults && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="h-20 w-20 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+                  <div className="text-3xl font-bold text-slate-800">
+                    Fetching Results...
+                  </div>
+                </div>
+              </div>
+            )}
             <Card className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
               <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -257,18 +267,27 @@ export default function MainPage({
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1 p-0 overflow-hidden"> 
+              <CardContent className="relative flex-1 p-0 overflow-hidden"> 
                  {/* 4. Render the Table if we have data, otherwise show placeholder */}
-                 {results.length > 0 ? (
-                    <div className="h-full w-full">
-                       <RFITable data={results} fields={tableFields} userMap={userMap} onGridReadyApi={setGridApi} />
-                    </div>
-                 ) : (
+                 <div
+                  className={`h-full w-full transition-all duration-200 ${
+                    loadingResults ? "blur-sm opacity-10 pointer-events-none" : ""
+                  }`}
+                >
+                  {results.length > 0 ? (
+                    <RFITable
+                      data={results}
+                      fields={tableFields}
+                      userMap={userMap}
+                      onGridReadyApi={setGridApi}
+                    />
+                  ) : (
                     <div className="m-6 flex h-[calc(100%-3rem)] flex-col gap-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center text-sm text-slate-500 justify-center items-center">
                       <p className="text-base font-medium text-slate-700">RFIs will appear here</p>
                       <p className="text-sm text-slate-500">Run a search or refresh to pull the latest results.</p>
                     </div>
-                 )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           </main>
